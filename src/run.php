@@ -21,12 +21,16 @@ set_error_handler(
 );
 
 $arguments = getopt("d::", array("data::"));
+
 if (!isset($arguments["data"])) {
 	print "Data folder not set.";
 	exit(1);
 }
 
 $config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
+
+
+$config = $config['parameters'];
 if (!isset($config['elastic']['host'])) {
 	print "Missing elastic host";
 	exit(1);
