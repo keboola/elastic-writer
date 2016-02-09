@@ -101,6 +101,7 @@ try {
 	print $e->getMessage();
 	exit(2);
 } catch (\Exception $e) {
+	print $e->getMessage();
 	exit(2);
 }
 
