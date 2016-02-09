@@ -33,16 +33,13 @@ class LoadTest extends AbstractTest
 	 */
 	protected function cleanUp()
 	{
-		try {
-			$params = ['index' => $this->index];
+		$params = ['index' => $this->index];
+
+		if ($this->writer->getClient()->indices()->exists($params)) {
 			$response = $this->writer->getClient()->indices()->delete($params);
 
 			$this->assertArrayHasKey('acknowledged', $response);
 			$this->assertTrue($response['acknowledged']);
-		} catch (Elasticsearch\Common\Exceptions\Missing404Exception $e) {
-			if ($e->getCode() !== 404) {
-				throw $e;
-			}
 		}
 	}
 
