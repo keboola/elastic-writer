@@ -1,0 +1,30 @@
+{
+  "name": "keboola/elasticsearch-writer",
+  "license": "MIT",
+  "type": "project",
+  "description": "Keboola Docker Elasticsearch writer",
+  "keywords": ["keboola", "elasticsearch", "writer"],
+  "authors": [
+    {
+      "name": "Erik Zigo",
+      "email": "erik.zigo@keboola.com"
+    }
+  ],
+  "require": {
+    "php": ">=5.3.3",
+    "keboola/csv": "~1.1.3",
+    "symfony/yaml": "~2.6.3",
+    "elasticsearch/elasticsearch": "2.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~5.0",
+    "squizlabs/php_codesniffer": "2.*",
+    "codeclimate/php-test-reporter": "dev-master"
+  },
+  "minimum-stability": "stable",
+  "autoload": {
+    "psr-4": {
+      "Keboola\\": "src/Keboola/"
+    }
+  }
+}
