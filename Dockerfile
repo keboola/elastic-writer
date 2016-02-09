@@ -1,4 +1,4 @@
-FROM quay.io/keboola/base-php56
+FROM quay.io/keboola/docker-base-php56
 
 WORKDIR /home
 
