@@ -1,4 +1,4 @@
-tests:
+tests13:
   build: .
   volumes:
     - .:/code
@@ -7,14 +7,35 @@ tests:
   tty: true
   stdin_open: true
   links:
-    - elasticsearch
+    - elasticsearch13
   environment:
-    EX_ES_HOST: elasticsearch
+    EX_ES_HOST: elasticsearch13
     EX_ES_PORT: 9200
 
-elasticsearch:
+tests22:
+  build: .
+  volumes:
+    - .:/code
+  working_dir: /code
+  entrypoint: "./phpunit.sh"
+  tty: true
+  stdin_open: true
+  links:
+    - elasticsearch2
+  environment:
+    EX_ES_HOST: elasticsearch2
+    EX_ES_PORT: 9200
+
+elasticsearch13:
   image: elasticsearch:1.3
   command: elasticsearch -Des.network.bind_host=0.0.0.0
   ports:
       - "9200:9200"
       - "9300:9300"
+
+elasticsearch2:
+  image: elasticsearch:2.2
+  command: elasticsearch -Des.network.bind_host=0.0.0.0
+  ports:
+      - "9220:9200"
+      - "9320:9300"
