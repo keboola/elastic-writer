@@ -77,7 +77,7 @@ class LoadTest extends AbstractTest
 		$this->assertArrayHasKey('settings', $settings[$options->getIndex()]);
 		$this->assertArrayHasKey('index', $settings[$options->getIndex()]['settings']);
 
-		$writer->getClient()->indices()->flush(['index' => $options->getIndex()]);
+		$writer->getClient()->indices()->refresh(['index' => $options->getIndex()]);
 
 		$params = [
 			'index' => $options->getIndex(),
