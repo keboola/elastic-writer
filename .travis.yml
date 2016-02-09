@@ -1,0 +1,11 @@
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker-compose -v
+
+script:
+  - docker-compose run app13
+  - docker-compose run app22
