@@ -4,12 +4,22 @@
  * @author Erik Zigo <erik.zigo@keboola.com>
  */
 use Symfony\Component\Yaml\Yaml;
-use Keboola\ElasticsearchWriter;
+use Keboola\ElasticsearchWriter\Exception;
+use Keboola\ElasticsearchWriter\Writer;
+use Keboola\ElasticsearchWriter\Options;
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
+use Monolog\Formatter\LineFormatter;
 use Keboola\Csv\CsvFile;
 
 require_once(__DIR__ . "/../bootstrap.php");
 
 const APP_NAME = 'wr-elasticsearch';
+
+$logger = new Logger(APP_NAME, array(
+	(new StreamHandler('php://stdout', Logger::INFO))->setFormatter(new LineFormatter("%message%\n")),
+	(new StreamHandler('php://stderr', Logger::ERROR))->setFormatter(new LineFormatter("%message%\n")),
+));
 
 set_error_handler(
 	function ($errno, $errstr, $errfile, $errline, array $errcontext) {
@@ -53,12 +63,14 @@ $host = sprintf(
 $path = $arguments["data"] . '/in/tables';
 
 try {
-	$writer = new ElasticsearchWriter\Writer($host);
+	$writer = new Writer($host);
+
+	$writer->enableLogger($logger);
 
 	try {
 		$writer->getClient()->ping();
 	} catch (\Exception $e) {
-		throw new ElasticsearchWriter\Exception\UserException("Connection to elasticsearch failed");
+		throw new Exception\UserException("Connection to elasticsearch failed");
 	}
 
 	$skipped = 0;
@@ -66,42 +78,46 @@ try {
 
 	foreach ($config['tables'] AS $table) {
 		if (empty($table['export'])) {
+			$logger->info(sprintf("Table %s - skipped", $table['tableId']));
 			$skipped++;
 			continue;
+		} else {
+			$logger->info(sprintf("Table %s - export start", $table['tableId']));
 		}
 
 		$file = new CsvFile(sprintf('%s/%s.csv', $path, $table['tableId']));
 		if (!$file->isFile()) {
-			$skipped++;
-			continue;
+			throw new Exception\ExportException(sprintf("Table %s export failed. Missing csv file", $table['tableId']));
 		}
 
-		$options = new ElasticsearchWriter\Options\LoadOptions();
+		$options = new Options\LoadOptions();
 		$options->setIndex($table['index'])
 			->setType($table['type']);
 
-		if (!empty($table['bulkSize'])) {
-			$options->setBulkSize($table['bulkSize']);
+		if (!empty($config['elastic']['bulkSize'])) {
+			$options->setBulkSize($config['elastic']['bulkSize']);
 		}
 
 		$result = $writer->loadFile($file, $options, $table['id']);
 		if (!$result) {
-			throw new ElasticsearchWriter\Exception\ExportException("Export table " . $table['tableId'] . " failed");
+			throw new Exception\ExportException("Export table " . $table['tableId'] . " failed");
+		} else {
+			$logger->info(sprintf("Table %s - export finished", $table['tableId']), array());
 		}
 
 		$processed++;
 	}
 
-	print sprintf("Writer finished. Exported %d tables. %d was skipped", $processed, $skipped);
+	$logger->info(sprintf("Elasticsearch writer finished. Exported %d tables. %d was skipped", $processed, $skipped));
 	exit(0);
-} catch (ElasticsearchWriter\Exception\UserException $e) {
-	print $e->getMessage();
+} catch (Exception\UserException $e) {
+	$logger->error($e->getMessage(), array());
 	exit(1);
-} catch (ElasticsearchWriter\Exception\ExportException $e) {
-	print $e->getMessage();
+} catch (Exception\ExportException $e) {
+	$logger->error($e->getMessage(), array());
 	exit(2);
 } catch (\Exception $e) {
-	print $e->getMessage();
+	$logger->error($e->getMessage(), array());
 	exit(2);
 }
 

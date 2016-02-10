@@ -8,6 +8,8 @@ namespace Keboola\ElasticsearchWriter;
 use Elasticsearch;
 use Keboola\Csv\CsvFile;
 use Keboola\ElasticsearchWriter\Options\LoadOptions;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class Writer
 {
@@ -16,11 +18,23 @@ class Writer
 	 */
 	private $client;
 
+	/**
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
 	public function __construct($host)
 	{
 		$builder = Elasticsearch\ClientBuilder::create();
 		$builder->setHosts(array($host));
 		$this->client = $builder->build();
+
+		$this->logger = new NullLogger();
+	}
+
+	public function enableLogger(LoggerInterface $logger)
+	{
+		$this->logger = $logger;
 	}
 
 	/**
@@ -43,6 +57,7 @@ class Writer
 
 		$params = ['body' => []];
 
+		$iBulk = 1;
 		foreach ($file AS $i => $line) {
 			// skip header
 			if (!$i) {
@@ -62,6 +77,12 @@ class Writer
 			$params['body'][] = $lineData;
 
 			if ($i % $options->getBulkSize() == 0) {
+				$this->logger->info(sprintf(
+					"Write %s batch %d to %s",
+					$options->getType(),
+					$iBulk,
+					$options->getIndex()
+				));
 				$responses = $this->client->bulk($params);
 
 				$params = ['body' => []];
@@ -70,11 +91,18 @@ class Writer
 					return false;
 				}
 
+				$iBulk++;
 				unset($responses);
 			}
 		}
 
 		if (!empty($params['body'])) {
+			$this->logger->info(sprintf(
+				"Write %s batch %d to %s",
+				$options->getType(),
+				$iBulk,
+				$options->getIndex()
+			));
 			$responses = $this->client->bulk($params);
 
 			if ($responses['errors'] !== false) {
