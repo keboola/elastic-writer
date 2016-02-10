@@ -7,6 +7,6 @@ before_install:
   - docker-compose -v
 
 script:
-  - docker-compose up app22
+  - docker-compose run app22
   - docker-compose stop
-  - docker-compose up app13
+  - docker-compose run app13
