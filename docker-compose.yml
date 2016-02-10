@@ -28,8 +28,12 @@ app22:
 
 elasticsearch13:
   image: elasticsearch:1.3
-  command: elasticsearch -Des.network.bind_host=0.0.0.0 -Des.http.port=9130 -Des.cluster.name="SAPI-Testing-13"
+  command: elasticsearch -Des.cluster.name="SAPI-Testing-13"
+  ports:
+    - "9130:9200"
 
 elasticsearch22:
   image: elasticsearch:2.2
-  command: elasticsearch -Des.network.bind_host=0.0.0.0 -Des.http.port=9220 -Des.cluster.name="SAPI-Testing-22"
+  command: elasticsearch -Des.cluster.name="SAPI-Testing-22"
+  ports:
+    - "9220:9200"
