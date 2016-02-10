@@ -6,7 +6,7 @@ services:
 before_install:
   - docker-compose -v
   - sudo apt-get -qq update
-  - sudo apt-get install -y docker-compose
+  - sudo apt-get install -y docker-engine
   - docker-compose -v
 
 script:
