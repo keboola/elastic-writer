@@ -6,7 +6,7 @@ services:
 before_install:
   - sudo service docker stop
   - sudo apt-get -qq update
-  - sudo apt-get install -y docker-engine
+  - sudo apt-get install -qq docker-engine
   - sudo service docker start
   - docker-compose -v
 
