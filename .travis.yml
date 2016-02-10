@@ -4,10 +4,6 @@ services:
   - docker
 
 before_install:
-  - sudo service docker stop
-  - sudo apt-get remove -y --purge docker-engine
-  - sudo apt-get -qq update
-  - sudo apt-get install -y -qq docker-engine
   - docker-compose -v
 
 script:
