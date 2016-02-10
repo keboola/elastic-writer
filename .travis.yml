@@ -1,10 +1,13 @@
 sudo: required
 
+services:
+  - docker
 
 before_install:
+  - sudo service docker stop
   - sudo apt-get -qq update
   - sudo apt-get install -y docker-engine
-  - service docker start
+  - sudo service docker start
   - docker-compose -v
 
 script:
