@@ -5,6 +5,9 @@ services:
 
 before_install:
   - docker-compose -v
+  - sudo apt-get -qq update
+  - sudo apt-get install -y docker-compose
+  - docker-compose -v
 
 script:
   - docker-compose run app22 && docker-compose run app13
