@@ -3,10 +3,8 @@ sudo: required
 services:
   - docker
 
-before_install:
-  - docker-compose -v
-
 script:
   - docker-compose run app22
   - docker-compose stop
+  - docker-compose rm -f
   - docker-compose run app13
