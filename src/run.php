@@ -41,7 +41,7 @@ $config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
 
 
 $config = $config['parameters'];
-if (!isset($config['elastic']['host'])) {
+if (!isset($config['elastic']['host']) && !isset($config['elastic']['#host'])) {
 	print "Missing elastic host";
 	exit(1);
 }
@@ -56,7 +56,7 @@ if (!isset($config['tables'])) {
 
 $host = sprintf(
 	'%s:%s',
-	$config['elastic']['host'],
+	!empty($config['elastic']['#host']) ? $config['elastic']['#host'] : $config['elastic']['host'],
 	$config['elastic']['port']
 );
 
