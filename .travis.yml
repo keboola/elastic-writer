@@ -8,5 +8,4 @@ before_install:
 
 script:
   - docker-compose run app22
-  - docker-compose stop
   - docker-compose run app13

@@ -2,7 +2,6 @@
 
 composer install -n
 
-echo "ES HOST $EX_ES_HOST:$EX_ES_HOST_PORT"
-curl $EX_ES_HOST:$EX_ES_HOST_PORT
+waitforservices
 
 ./vendor/bin/phpunit
