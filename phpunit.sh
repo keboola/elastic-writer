@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-composer install -n
 
 echo "ES HOST $EX_ES_HOST:$EX_ES_HOST_PORT"
-curl $EX_ES_HOST:$EX_ES_HOST_PORT/_nodes?pretty
+curl $EX_ES_HOST:$EX_ES_HOST_PORT/_cluster/health?pretty
 
 env
 
-./vendor/bin/phpunit
+curl elasticsearch13:9200/_cluster/health?pretty
+curl elasticsearch22:9200/_cluster/health?pretty

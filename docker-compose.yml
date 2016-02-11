@@ -8,6 +8,7 @@ app13:
   stdin_open: true
   links:
     - elasticsearch13
+    - elasticsearch22
   environment:
     EX_ES_HOST: elasticsearch13
     EX_ES_HOST_PORT: 9200
