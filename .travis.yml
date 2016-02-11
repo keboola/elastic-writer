@@ -9,3 +9,5 @@ before_install:
 script:
   - docker-compose run app22
   - docker-compose run app13
+notifications:
+  slack: $SLACK_INTEGRATION_DOMAIN:$SLACK_INTEGRATION_KEY
