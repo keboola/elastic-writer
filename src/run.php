@@ -60,10 +60,6 @@ $host = sprintf(
 	$config['elastic']['port']
 );
 
-if (!empty($config['elastic']['#host'])) {
-	$logger->info('Decrypted host usage', array());	
-}
-
 $path = $arguments["data"] . '/in/tables';
 
 try {
@@ -74,8 +70,7 @@ try {
 	try {
 		$writer->getClient()->ping();
 	} catch (\Exception $e) {
-		$logger->error($e->getMessage(), array());
-		throw new Exception\UserException(sprintf('Connection to "%s" failed', $host));
+		throw new Exception\UserException("Connection to elasticsearch failed");
 	}
 
 	$skipped = 0;
