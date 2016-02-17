@@ -34,3 +34,13 @@
                     }
                 ]
         }
+        
+# Kebooola Connection
+
+Elasticsearch Writer is integrated in Keboola Connection.
+
+![image](https://cloud.githubusercontent.com/assets/1726727/13111357/a66b4674-d585-11e5-92cd-f8ff11fe1ebf.png)
+
+Available with standard KB Docker Generic UI
+
+![image](https://cloud.githubusercontent.com/assets/1726727/13111467/3cde9994-d586-11e5-83ca-00caefb22a2e.png)
