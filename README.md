@@ -44,4 +44,3 @@ Elasticsearch Writer is integrated in Keboola Connection.
 Available with standard KB Docker Generic UI
 
 ![image](https://cloud.githubusercontent.com/assets/1726727/13111467/3cde9994-d586-11e5-83ca-00caefb22a2e.png)
-# test

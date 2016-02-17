@@ -1,4 +1,5 @@
 FROM quay.io/keboola/docker-base-php56:0.0.2
+MAINTAINER Erik Zigo <erik.zigo@keboola.com>
 
 WORKDIR /home
 
