@@ -1,4 +1,7 @@
 # Elasticsearch Writer
+
+Writer expects that mapping of types and indexes in your Elasticsearch exists. If it is missing and you have enabled [automatic index creation](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html#index-creation), new mapping will be created.
+
 ---
 
 # Configuration
