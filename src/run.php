@@ -30,39 +30,39 @@ set_error_handler(
 	}
 );
 
-$arguments = getopt("d::", array("data::"));
-
-if (!isset($arguments["data"])) {
-	print "Data folder not set.";
-	exit(1);
-}
-
-$config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
-
-
-$config = $config['parameters'];
-if (!isset($config['elastic']['host']) && !isset($config['elastic']['#host'])) {
-	print "Missing elastic host";
-	exit(1);
-}
-if (!isset($config['elastic']['port'])) {
-	print "Missing elastic port";
-	exit(1);
-}
-if (!isset($config['tables'])) {
-	print "Missing tables config";
-	exit(1);
-}
-
-$host = sprintf(
-	'%s:%s',
-	!empty($config['elastic']['#host']) ? $config['elastic']['#host'] : $config['elastic']['host'],
-	$config['elastic']['port']
-);
-
-$path = $arguments["data"] . '/in/tables';
-
 try {
+	$arguments = getopt("d::", array("data::"));
+
+	if (!isset($arguments["data"])) {
+		print "Data folder not set.";
+		exit(1);
+	}
+
+	$config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
+
+
+	$config = $config['parameters'];
+	if (!isset($config['elastic']['host']) && !isset($config['elastic']['#host'])) {
+		print "Missing elastic host";
+		exit(1);
+	}
+	if (!isset($config['elastic']['port'])) {
+		print "Missing elastic port";
+		exit(1);
+	}
+	if (!isset($config['tables'])) {
+		print "Missing tables config";
+		exit(1);
+	}
+
+	$host = sprintf(
+		'%s:%s',
+		!empty($config['elastic']['#host']) ? $config['elastic']['#host'] : $config['elastic']['host'],
+		$config['elastic']['port']
+	);
+
+	$path = $arguments["data"] . '/in/tables';
+
 	$writer = new Writer($host);
 
 	$writer->enableLogger($logger);
