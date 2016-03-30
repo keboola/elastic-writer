@@ -107,7 +107,7 @@ try {
 
 			$result = $writer->loadFile($file, $options, $table['id']);
 			if (!$result) {
-				throw new Exception\ExportException("Export table " . $table['tableId'] . " failed");
+				throw new Exception\UserException("Export table " . $table['tableId'] . " failed");
 			} else {
 				$logger->info(sprintf("Table %s - export finished", $table['tableId']), array());
 			}
@@ -145,7 +145,7 @@ try {
 
 			$result = $writer->loadFile($file, $options, $table['id']);
 			if (!$result) {
-				throw new Exception\ExportException("Export file " . $table['file'] . " failed");
+				throw new Exception\UserException("Export file " . $table['file'] . " failed");
 			} else {
 				$logger->info(sprintf("File %s - export finished", $table['file']), array());
 			}
