@@ -13,7 +13,9 @@ Writer expects that mapping of types and indexes in your Elasticsearch exists. I
     - `bulkSize` *(optional)* - size of a batch to upload to Elasticsearch *(default is 10.000)*
     
 - The `tables` section defines database tables, their columns and their data types
-    - `tableId` - StorageAPI table ID of the table we want to write into Elasticsearch (see https://github.com/keboola/docker-bundle/blob/master/ENVIRONMENT.md#input-mapping) for more info about Input Mapping
+    - `file` or `tableId`
+        - `file` - CSV file of the table we want to write into Elasticsearch (see https://github.com/keboola/docker-bundle/blob/master/ENVIRONMENT.md#input-mapping) for more info about Input Mapping
+        - `tableId` - *(deprecated)* - ~~StorageAPI table ID of the table we want to write into Elasticsearch (see https://github.com/keboola/docker-bundle/blob/master/ENVIRONMENT.md#input-mapping) for more info about Input Mapping (Works only if *destination* attribute is not set in table configuration)~~
     - `index` - index name in ES
     - `type` - type of the data, determines the type in ES,
     - `id` - determines in which column of table is the document's ID/primary key
@@ -29,7 +31,7 @@ Writer expects that mapping of types and indexes in your Elasticsearch exists. I
                 },
                 "tables": [
                     {
-                        "tableId": "in.c-main.products",
+                        "file": "products.csv",
                         "index": "production",
                         "type": "products",
                         "id": "id",
@@ -37,7 +39,7 @@ Writer expects that mapping of types and indexes in your Elasticsearch exists. I
                     }
                 ]
         }
-        
+
 # Kebooola Connection
 
 Elasticsearch Writer is integrated in Keboola Connection.
