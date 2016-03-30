@@ -91,7 +91,7 @@ try {
 
 		$file = new CsvFile(sprintf('%s/%s.csv', $path, $table['tableId']));
 		if (!$file->isFile()) {
-			throw new Exception\ExportException(sprintf("Table %s export failed. Missing csv file", $table['tableId']));
+			throw new Exception\UserException(sprintf("Table %s export failed. Missing csv file", $table['tableId']));
 		}
 
 		$options = new Options\LoadOptions();
