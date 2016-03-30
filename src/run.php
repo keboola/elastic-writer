@@ -40,6 +40,10 @@ try {
 
 	$config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
 
+	if (!isset($config['parameters'])) {
+		print "Missing parameters configuration";
+		exit(1);
+	}
 
 	$config = $config['parameters'];
 	if (!isset($config['elastic']['host']) && !isset($config['elastic']['#host'])) {
