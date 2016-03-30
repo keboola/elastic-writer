@@ -81,35 +81,80 @@ try {
 	$processed = 0;
 
 	foreach ($config['tables'] AS $table) {
-		if (empty($table['export'])) {
-			$logger->info(sprintf("Table %s - skipped", $table['tableId']));
-			$skipped++;
+		// export by tableId
+		// using table id is @deprecated
+		if (!empty($table['tableId'])) {
+			if (empty($table['export'])) {
+				$logger->info(sprintf("Table %s - skipped", $table['tableId']));
+				$skipped++;
+				continue;
+			} else {
+				$logger->info(sprintf("Table %s - export start", $table['tableId']));
+			}
+
+			$file = new CsvFile(sprintf('%s/%s.csv', $path, $table['tableId']));
+			if (!$file->isFile()) {
+				throw new Exception\UserException(sprintf("Table %s export failed. Missing csv file", $table['tableId']));
+			}
+
+			$options = new Options\LoadOptions();
+			$options->setIndex($table['index'])
+				->setType($table['type']);
+
+			if (!empty($config['elastic']['bulkSize'])) {
+				$options->setBulkSize($config['elastic']['bulkSize']);
+			}
+
+			$result = $writer->loadFile($file, $options, $table['id']);
+			if (!$result) {
+				throw new Exception\ExportException("Export table " . $table['tableId'] . " failed");
+			} else {
+				$logger->info(sprintf("Table %s - export finished", $table['tableId']), array());
+			}
+
+			$processed++;
 			continue;
-		} else {
-			$logger->info(sprintf("Table %s - export start", $table['tableId']));
 		}
 
-		$file = new CsvFile(sprintf('%s/%s.csv', $path, $table['tableId']));
-		if (!$file->isFile()) {
-			throw new Exception\UserException(sprintf("Table %s export failed. Missing csv file", $table['tableId']));
+		// export by file
+		if (!empty($table['file'])) {
+			if (empty($table['export'])) {
+				$logger->info(sprintf("File %s - skipped", $table['file']));
+				$skipped++;
+				continue;
+			} else {
+				$logger->info(sprintf("File %s - export start", $table['file']));
+			}
+
+			$file = new CsvFile(sprintf('%s/%s', $path, $table['file']));
+			if (!$file->isFile()) {
+				throw new Exception\UserException(sprintf("File %s export failed. Missing csv file", $table['file']));
+			}
+
+			if (mb_strtolower($file->getExtension()) !== 'csv') {
+				throw new Exception\UserException(sprintf("File %s export failed. Only csv files are supported", $table['file']));
+			}
+
+			$options = new Options\LoadOptions();
+			$options->setIndex($table['index'])
+				->setType($table['type']);
+
+			if (!empty($config['elastic']['bulkSize'])) {
+				$options->setBulkSize($config['elastic']['bulkSize']);
+			}
+
+			$result = $writer->loadFile($file, $options, $table['id']);
+			if (!$result) {
+				throw new Exception\ExportException("Export file " . $table['file'] . " failed");
+			} else {
+				$logger->info(sprintf("File %s - export finished", $table['file']), array());
+			}
+
+			$processed++;
+			continue;
 		}
 
-		$options = new Options\LoadOptions();
-		$options->setIndex($table['index'])
-			->setType($table['type']);
-
-		if (!empty($config['elastic']['bulkSize'])) {
-			$options->setBulkSize($config['elastic']['bulkSize']);
-		}
-
-		$result = $writer->loadFile($file, $options, $table['id']);
-		if (!$result) {
-			throw new Exception\ExportException("Export table " . $table['tableId'] . " failed");
-		} else {
-			$logger->info(sprintf("Table %s - export finished", $table['tableId']), array());
-		}
-
-		$processed++;
+		throw new Exception\UserException(sprintf("Missing file or tableId configuration"));
 	}
 
 	$logger->info(sprintf("Elasticsearch writer finished. Exported %d tables. %d was skipped", $processed, $skipped));
