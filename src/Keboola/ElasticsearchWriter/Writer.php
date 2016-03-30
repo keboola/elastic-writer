@@ -92,6 +92,7 @@ class Writer
 						foreach ($responses['items'] as $itemResult) {
 							if (!empty($itemResult['index']['error'])) {
 								$this->logger->error(sprintf("ES error: %s", $itemResult['index']['error']));
+								return false;
 							}
 						}
 					}
@@ -118,6 +119,7 @@ class Writer
 					foreach ($responses['items'] as $itemResult) {
 						if (!empty($itemResult['index']['error'])) {
 							$this->logger->error(sprintf("ES error: %s", $itemResult['index']['error']));
+							return false;
 						}
 					}
 				}
