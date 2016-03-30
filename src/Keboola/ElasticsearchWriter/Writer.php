@@ -88,6 +88,14 @@ class Writer
 				$params = ['body' => []];
 
 				if ($responses['errors'] !== false) {
+					if (!empty($responses['items'])) {
+						foreach ($responses['items'] as $itemResult) {
+							if (!empty($itemResult['index']['error'])) {
+								$this->logger->error(sprintf("ES error: %s", $itemResult['index']['error']));
+							}
+						}
+					}
+
 					return false;
 				}
 
@@ -106,6 +114,14 @@ class Writer
 			$responses = $this->client->bulk($params);
 
 			if ($responses['errors'] !== false) {
+				if (!empty($responses['items'])) {
+					foreach ($responses['items'] as $itemResult) {
+						if (!empty($itemResult['index']['error'])) {
+							$this->logger->error(sprintf("ES error: %s", $itemResult['index']['error']));
+						}
+					}
+				}
+
 				return false;
 			}
 
