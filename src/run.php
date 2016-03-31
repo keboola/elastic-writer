@@ -7,6 +7,7 @@ use Symfony\Component\Yaml\Yaml;
 use Keboola\ElasticsearchWriter\Exception;
 use Keboola\ElasticsearchWriter\Writer;
 use Keboola\ElasticsearchWriter\Options;
+use Keboola\ElasticsearchWriter\Validator;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Formatter\LineFormatter;
@@ -39,25 +40,14 @@ try {
 	}
 
 	$config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
-
-	if (!isset($config['parameters'])) {
-		print "Missing parameters configuration";
-		exit(1);
+	if (empty($config)) {
+		print "Could not parse config file";
+		exit(2);
 	}
+
+	Validator\ConfigValidator::validate($config);
 
 	$config = $config['parameters'];
-	if (!isset($config['elastic']['host']) && !isset($config['elastic']['#host'])) {
-		print "Missing elastic host";
-		exit(1);
-	}
-	if (!isset($config['elastic']['port'])) {
-		print "Missing elastic port";
-		exit(1);
-	}
-	if (!isset($config['tables'])) {
-		print "Missing tables config";
-		exit(1);
-	}
 
 	$host = sprintf(
 		'%s:%s',
@@ -68,7 +58,6 @@ try {
 	$path = $arguments["data"] . '/in/tables';
 
 	$writer = new Writer($host);
-
 	$writer->enableLogger($logger);
 
 	try {
@@ -80,81 +69,60 @@ try {
 	$skipped = 0;
 	$processed = 0;
 
+	$requiredParams = array();
+
 	foreach ($config['tables'] AS $table) {
-		// export by tableId
-		// using table id is @deprecated
-		if (!empty($table['tableId'])) {
-			if (empty($table['export'])) {
-				$logger->info(sprintf("Table %s - skipped", $table['tableId']));
-				$skipped++;
-				continue;
-			} else {
-				$logger->info(sprintf("Table %s - export start", $table['tableId']));
-			}
+		$sourceType = !empty($table['tableId']) ? 'table' : 'file';
 
-			$file = new CsvFile(sprintf('%s/%s.csv', $path, $table['tableId']));
-			if (!$file->isFile()) {
-				throw new Exception\UserException(sprintf("Table %s export failed. Missing csv file", $table['tableId']));
-			}
+		if ($sourceType == 'table') {
+			$logPrefix = sprintf('Table %s - ', $table['tableId']);
+		} else {
+			$logPrefix = sprintf('File %s - ', $table['file']);
+		}
 
-			$options = new Options\LoadOptions();
-			$options->setIndex($table['index'])
-				->setType($table['type']);
-
-			if (!empty($config['elastic']['bulkSize'])) {
-				$options->setBulkSize($config['elastic']['bulkSize']);
-			}
-
-			$result = $writer->loadFile($file, $options, $table['id']);
-			if (!$result) {
-				throw new Exception\UserException("Export table " . $table['tableId'] . " failed");
-			} else {
-				$logger->info(sprintf("Table %s - export finished", $table['tableId']), array());
-			}
-
-			$processed++;
+		if (empty($table['export'])) {
+			$logger->info($logPrefix . 'Skipped');
+			$skipped++;
 			continue;
 		}
 
-		// export by file
-		if (!empty($table['file'])) {
-			if (empty($table['export'])) {
-				$logger->info(sprintf("File %s - skipped", $table['file']));
-				$skipped++;
-				continue;
-			} else {
-				$logger->info(sprintf("File %s - export start", $table['file']));
-			}
+		$logger->info($logPrefix . 'Export start');
 
+		// load options
+		$options = new Options\LoadOptions();
+		$options->setIndex($table['index'])
+			->setType($table['type']);
+
+		if (!empty($config['elastic']['bulkSize'])) {
+			$options->setBulkSize($config['elastic']['bulkSize']);
+		}
+
+		$idColumn = !empty($table['id']) ? $table['id'] : null;
+
+
+		// source file
+		if (!empty($table['tableId'])) {
+			$file = new CsvFile(sprintf('%s/%s.csv', $path, $table['tableId']));
+		} else {
 			$file = new CsvFile(sprintf('%s/%s', $path, $table['file']));
-			if (!$file->isFile()) {
-				throw new Exception\UserException(sprintf("File %s export failed. Missing csv file", $table['file']));
-			}
 
 			if (mb_strtolower($file->getExtension()) !== 'csv') {
-				throw new Exception\UserException(sprintf("File %s export failed. Only csv files are supported", $table['file']));
+				throw new Exception\UserException($logPrefix . 'Export failed. Only csv files are supported');
 			}
-
-			$options = new Options\LoadOptions();
-			$options->setIndex($table['index'])
-				->setType($table['type']);
-
-			if (!empty($config['elastic']['bulkSize'])) {
-				$options->setBulkSize($config['elastic']['bulkSize']);
-			}
-
-			$result = $writer->loadFile($file, $options, $table['id']);
-			if (!$result) {
-				throw new Exception\UserException("Export file " . $table['file'] . " failed");
-			} else {
-				$logger->info(sprintf("File %s - export finished", $table['file']), array());
-			}
-
-			$processed++;
-			continue;
 		}
 
-		throw new Exception\UserException(sprintf("Missing file or tableId configuration"));
+		if (!$file->isFile()) {
+			throw new Exception\UserException($logPrefix . 'Export failed. Missing csv file');
+		}
+
+		$result = $writer->loadFile($file, $options, $idColumn);
+		if (!$result) {
+			throw new Exception\UserException($logPrefix . 'Export failed');
+		} else {
+			$logger->info($logPrefix . 'Export finished', array());
+		}
+
+		$processed++;
 	}
 
 	$logger->info(sprintf("Elasticsearch writer finished. Exported %d tables. %d was skipped", $processed, $skipped));
