@@ -18,7 +18,7 @@ Writer expects that mapping of types and indexes in your Elasticsearch exists. I
         - `tableId` - *(deprecated)* - ~~StorageAPI table ID of the table we want to write into Elasticsearch (see https://github.com/keboola/docker-bundle/blob/master/ENVIRONMENT.md#input-mapping) for more info about Input Mapping (Works only if *destination* attribute is not set in table configuration)~~
     - `index` - index name in ES
     - `type` - type of the data, determines the type in ES,
-    - `id` - determines in which column of table is the document's ID/primary key
+    - `id` *(optional)* - determines in which column of table is the document's ID/primary key
     - `export` - whether this table shall be exported to ES
 
 ## Example
