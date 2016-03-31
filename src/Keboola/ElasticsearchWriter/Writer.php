@@ -67,7 +67,7 @@ class Writer
 			$lineData = array_combine($csvHeader, $line);
 
 			if ($primaryIndex) {
-				if (!array_key_exists($primaryIndex, $csvHeader)) {
+				if (!array_key_exists($primaryIndex, $lineData)) {
 					$this->logger->error(sprintf("CSV error: Missing id column %s on line %s", $primaryIndex, $i + 1));
 					return false;
 				}
