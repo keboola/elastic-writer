@@ -12,6 +12,7 @@ use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Formatter\LineFormatter;
 use Keboola\Csv\CsvFile;
+use \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 require_once(__DIR__ . "/../bootstrap.php");
 
@@ -45,7 +46,11 @@ try {
 		exit(2);
 	}
 
-	Validator\ConfigValidator::validate($config);
+	try {
+		Validator\ConfigValidator::validate($config);
+	} catch (InvalidConfigurationException $e) {
+		throw new Exception\UserException($e->getMessage());
+	}
 
 	$config = $config['parameters'];
 
