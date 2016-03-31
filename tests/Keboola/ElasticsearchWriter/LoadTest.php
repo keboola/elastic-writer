@@ -55,12 +55,12 @@ class LoadTest extends AbstractTest
 			->setType('language')
 			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
 
-		$csv1 = new CsvFile(__DIR__ .'/../../data/' . $options->getType() .'.csv');
+		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
 		$result = $writer->loadFile($csv1, $options, 'id');
 
 		$this->assertTrue($result);
 
-		$csv2 = new CsvFile(__DIR__ .'/../../data/' . $options->getType() .'-update.csv');
+		$csv2 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'-update.csv');
 		$result = $writer->loadFile($csv2, $options, 'id');
 
 		$this->assertTrue($result);
@@ -99,7 +99,7 @@ class LoadTest extends AbstractTest
 			->setType('language')
 			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
 
-		$csv1 = new CsvFile(__DIR__ .'/../../data/' . $options->getType() .'.csv');
+		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
 		$result = $writer->loadFile($csv1, $options, 'fakeId');
 
 		$this->assertFalse($result);
@@ -117,7 +117,7 @@ class LoadTest extends AbstractTest
 			->setType('language')
 			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
 
-		$csv1 = new CsvFile(__DIR__ .'/../../data/' . $options->getType() .'.csv');
+		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
 		$result = $writer->loadFile($csv1, $options, 'id');
 
 		$this->assertTrue($result);
@@ -160,7 +160,7 @@ class LoadTest extends AbstractTest
 			->setType('language')
 			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
 
-		$csv1 = new CsvFile(__DIR__ .'/../../data/' . $options->getType() .'.csv');
+		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
 		$result = $writer->loadFile($csv1, $options, null);
 
 		$this->assertTrue($result);

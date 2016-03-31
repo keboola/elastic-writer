@@ -41,6 +41,10 @@ class ConfigValidator
 				throw new InvalidConfigurationException($logPrefix . 'Config must be array');
 
 			}
+
+			if (!isset($tableConfig['tableId']) && !isset($tableConfig['file'])) {
+				throw new InvalidConfigurationException($logPrefix . 'Missing file or tableId');
+			}
 			if (!isset($tableConfig['index'])) {
 				throw new InvalidConfigurationException($logPrefix . 'Missing elastic index');
 			}
