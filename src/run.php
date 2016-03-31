@@ -40,6 +40,10 @@ try {
 	}
 
 	$config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
+	if (empty($config)) {
+		print "Could not parse config file";
+		exit(2);
+	}
 
 	Validator\ConfigValidator::validate($config);
 
