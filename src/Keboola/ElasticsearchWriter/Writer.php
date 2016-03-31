@@ -51,7 +51,7 @@ class Writer
 	 * @param $primaryIndex
 	 * @return bool
 	 */
-	public function loadFile(CsvFile $file, LoadOptions $options, $primaryIndex)
+	public function loadFile(CsvFile $file, LoadOptions $options, $primaryIndex = null)
 	{
 		$csvHeader = $file->getHeader();
 
@@ -66,13 +66,27 @@ class Writer
 
 			$lineData = array_combine($csvHeader, $line);
 
-			$params['body'][] = [
-				'index' => [
-					'_index' => $options->getIndex(),
-					'_type' => $options->getType(),
-					'_id' => $lineData[$primaryIndex]
-				]
-			];
+			if ($primaryIndex) {
+				if (!array_key_exists($primaryIndex, $csvHeader)) {
+					$this->logger->error(sprintf("CSV error: Missing id column %s on line %s", $primaryIndex, $i + 1));
+					return false;
+				}
+
+				$params['body'][] = [
+					'index' => [
+						'_index' => $options->getIndex(),
+						'_type' => $options->getType(),
+						'_id' => $lineData[$primaryIndex]
+					]
+				];
+			} else {
+				$params['body'][] = [
+					'index' => [
+						'_index' => $options->getIndex(),
+						'_type' => $options->getType(),
+					]
+				];
+			}
 
 			$params['body'][] = $lineData;
 
