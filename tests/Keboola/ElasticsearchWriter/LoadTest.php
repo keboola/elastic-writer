@@ -46,7 +46,7 @@ class LoadTest extends AbstractTest
 	/**
 	 * Test bulk load
 	 */
-	public function testWriter()
+	public function testWriterWithDocumentId()
 	{
 		$writer = $this->writer;
 
@@ -85,5 +85,91 @@ class LoadTest extends AbstractTest
 
 		$this->assertArrayHasKey('count', $count);
 		$this->assertEquals($this->countTable($csv1) + $this->countTable($csv2) - 1, $count['count']);
+	}
+
+	/**
+	 * Test bulk load
+	 */
+	public function testWriterWithDocumentIdTwice()
+	{
+		$writer = $this->writer;
+
+		$options = new LoadOptions();
+		$options->setIndex($this->index)
+			->setType('language')
+			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
+
+		$csv1 = new CsvFile(__DIR__ .'/../../data/' . $options->getType() .'.csv');
+		$result = $writer->loadFile($csv1, $options, 'id');
+
+		$this->assertTrue($result);
+
+		$result = $writer->loadFile($csv1, $options, 'id');
+
+		$this->assertTrue($result);
+
+		// test if index exists
+		$params = ['index' => $options->getIndex()];
+		$settings = $writer->getClient()->indices()->getSettings($params);
+
+		$this->assertCount(1, $settings);
+		$this->assertArrayHasKey($options->getIndex(), $settings);
+		$this->assertArrayHasKey('settings', $settings[$options->getIndex()]);
+		$this->assertArrayHasKey('index', $settings[$options->getIndex()]['settings']);
+
+		$writer->getClient()->indices()->refresh(['index' => $options->getIndex()]);
+
+		$params = [
+			'index' => $options->getIndex(),
+			'type' => $options->getType(),
+		];
+
+		$count = $writer->getClient()->count($params);
+
+		$this->assertArrayHasKey('count', $count);
+		$this->assertEquals($this->countTable($csv1), $count['count']);
+	}
+
+	/**
+	 * Test bulk load
+	 */
+	public function testWriterTwice()
+	{
+		$writer = $this->writer;
+
+		$options = new LoadOptions();
+		$options->setIndex($this->index)
+			->setType('language')
+			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
+
+		$csv1 = new CsvFile(__DIR__ .'/../../data/' . $options->getType() .'.csv');
+		$result = $writer->loadFile($csv1, $options, null);
+
+		$this->assertTrue($result);
+
+		$result = $writer->loadFile($csv1, $options, null);
+
+		$this->assertTrue($result);
+
+		// test if index exists
+		$params = ['index' => $options->getIndex()];
+		$settings = $writer->getClient()->indices()->getSettings($params);
+
+		$this->assertCount(1, $settings);
+		$this->assertArrayHasKey($options->getIndex(), $settings);
+		$this->assertArrayHasKey('settings', $settings[$options->getIndex()]);
+		$this->assertArrayHasKey('index', $settings[$options->getIndex()]['settings']);
+
+		$writer->getClient()->indices()->refresh(['index' => $options->getIndex()]);
+
+		$params = [
+			'index' => $options->getIndex(),
+			'type' => $options->getType(),
+		];
+
+		$count = $writer->getClient()->count($params);
+
+		$this->assertArrayHasKey('count', $count);
+		$this->assertEquals($this->countTable($csv1) * 2, $count['count']);
 	}
 }
