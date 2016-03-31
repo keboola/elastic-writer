@@ -90,6 +90,24 @@ class LoadTest extends AbstractTest
 	/**
 	 * Test bulk load
 	 */
+	public function testWriterWithInvalidDocumentId()
+	{
+		$writer = $this->writer;
+
+		$options = new LoadOptions();
+		$options->setIndex($this->index)
+			->setType('language')
+			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
+
+		$csv1 = new CsvFile(__DIR__ .'/../../data/' . $options->getType() .'.csv');
+		$result = $writer->loadFile($csv1, $options, 'fakeId');
+
+		$this->assertFalse($result);
+	}
+
+	/**
+	 * Test bulk load
+	 */
 	public function testWriterWithDocumentIdTwice()
 	{
 		$writer = $this->writer;
