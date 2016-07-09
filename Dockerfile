@@ -1,10 +1,14 @@
-FROM quay.io/keboola/docker-base-php56:0.0.2
+FROM php:7.0
 MAINTAINER Erik Zigo <erik.zigo@keboola.com>
 
 WORKDIR /home
 
-# Initialize
-COPY . /home/
+RUN apt-get update && apt-get install unzip git libxml2-dev -y
+RUN cd && curl -sS https://getcomposer.org/installer | php && ln -s /root/composer.phar /usr/local/bin/composer
+
+ADD . /home/
+ADD docker/php.ini /usr/local/etc/php/php.ini
+
 RUN composer install --no-interaction
 
 RUN curl --location --silent --show-error --fail \
