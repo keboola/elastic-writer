@@ -92,12 +92,20 @@ class Writer
 
 			if ($i % $options->getBulkSize() == 0) {
 				$this->logger->info(sprintf(
-					"Write %s batch %d to %s",
+					"Write %s batch %d to %s start",
 					$options->getType(),
 					$iBulk,
 					$options->getIndex()
 				));
 				$responses = $this->client->bulk($params);
+
+				$this->logger->info(sprintf(
+					"Write %s batch %d to %s took %d ms",
+					$options->getType(),
+					$iBulk,
+					$options->getIndex(),
+					$responses['took']
+				));
 
 				$params = ['body' => []];
 
@@ -113,7 +121,7 @@ class Writer
 
 					return false;
 				}
-
+				
 				$iBulk++;
 				unset($responses);
 			}
@@ -121,12 +129,20 @@ class Writer
 
 		if (!empty($params['body'])) {
 			$this->logger->info(sprintf(
-				"Write %s batch %d to %s",
+				"Write %s batch %d to %s start",
 				$options->getType(),
 				$iBulk,
 				$options->getIndex()
 			));
 			$responses = $this->client->bulk($params);
+
+			$this->logger->info(sprintf(
+				"Write %s batch %d to %s took %d ms",
+				$options->getType(),
+				$iBulk,
+				$options->getIndex(),
+				$responses['took']
+			));
 
 			if ($responses['errors'] !== false) {
 				if (!empty($responses['items'])) {
