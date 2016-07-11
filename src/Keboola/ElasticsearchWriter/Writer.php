@@ -46,6 +46,43 @@ class Writer
 	}
 
 	/**
+	 * List of all indices
+	 * @return array
+	 */
+	public function listIndices()
+	{
+		$return = array();
+
+		$stats = $this->client->indices()->stats(array('metric' => 'indices'));
+		if (!empty($stats['indices'])) {
+			foreach (array_keys($stats['indices']) AS $indice) {
+				$return[] = array('id' => $indice);
+			}
+		}
+
+		return $return;
+	}
+
+	/**
+	 * List of all mappings in specified index
+	 * @return array
+	 */
+	public function listIndiceMappings($indice)
+	{
+		$return = array();
+
+		$stats = $this->client->indices()->getMapping(array('index' => $indice));
+
+		if (!empty($stats[$indice]) && !empty($stats[$indice]['mappings'])) {
+			foreach (array_keys($stats[$indice]['mappings']) AS $mapping) {
+				$return[] = array('id' => $mapping);
+			}
+		}
+
+		return $return;
+	}
+
+	/**
 	 * @param CsvFile $file
 	 * @param LoadOptions $options
 	 * @param $primaryIndex
