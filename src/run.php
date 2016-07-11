@@ -10,34 +10,28 @@ use Keboola\ElasticsearchWriter\Options;
 use Keboola\ElasticsearchWriter\Validator;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
+use Monolog\Handler\NullHandler;
 use Monolog\Formatter\LineFormatter;
 use Keboola\Csv\CsvFile;
 use \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
+define('APP_NAME', 'wr-elasticsearch');
+
 require_once(__DIR__ . "/../bootstrap.php");
 
-const APP_NAME = 'wr-elasticsearch';
 
 $logger = new Logger(APP_NAME, array(
 	(new StreamHandler('php://stdout', Logger::INFO))->setFormatter(new LineFormatter("%message%\n")),
 	(new StreamHandler('php://stderr', Logger::ERROR))->setFormatter(new LineFormatter("%message%\n")),
 ));
 
-set_error_handler(
-	function ($errno, $errstr, $errfile, $errline, array $errcontext) {
-		if (0 === error_reporting()) {
-			return false;
-		}
-		throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-	}
-);
+$action = 'run';
+
 
 try {
-	$arguments = getopt("d::", array("data::"));
-
+	$arguments = getopt("d::", ["data::"]);
 	if (!isset($arguments["data"])) {
-		print "Data folder not set.";
-		exit(1);
+		throw new Exception\UserException('Data folder not set.');
 	}
 
 	$config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
@@ -52,7 +46,12 @@ try {
 		throw new Exception\UserException($e->getMessage());
 	}
 
+	$action = isset($config['action']) ? $config['action'] : $action;
 	$config = $config['parameters'];
+
+	if ($action !== 'run') {
+		$logger->setHandlers(array(new NullHandler(Logger::INFO)));
+	}
 
 	$host = sprintf(
 		'%s:%s',
@@ -132,14 +131,20 @@ try {
 
 	$logger->info(sprintf("Elasticsearch writer finished. Exported %d tables. %d was skipped", $processed, $skipped));
 	exit(0);
-} catch (Exception\UserException $e) {
-	$logger->error($e->getMessage(), array());
+} catch(Exception\UserException $e) {
+	$logger->log('error', $e->getMessage(), array());
+
+	if ($action !== 'run') {
+		echo $e->getMessage();
+	}
+
 	exit(1);
-} catch (Exception\ExportException $e) {
-	$logger->error($e->getMessage(), array());
+} catch(Exception\ExportException $e) {
+	$logger->log('error', $e->getMessage(), array());
 	exit(2);
 } catch (\Exception $e) {
-	$logger->error($e->getMessage(), array());
+	print $e->getMessage();
+	print $e->getTraceAsString();
+
 	exit(2);
 }
-
