@@ -11,48 +11,64 @@ use Symfony\Component\Yaml\Yaml;
 
 class ConfigTest extends AbstractTest
 {
-	/**
-	 * Test valid configs
-	 */
-	public function testValidConfigs()
+	public function validConfigsData()
 	{
+		$return = array();
 		$path = __DIR__ .'/../../data/config/valid';
 
 		$files = scandir($path);
 		foreach ($files AS $file) {
-			if (!preg_match('/\.yml$/ui', $file)) {
-				continue;
+			if (preg_match('/\.yml$/ui', $file)) {
+				$return[]  = [$path . "/" . $file];
 			}
-
-			$config = Yaml::parse(file_get_contents($path . "/" . $file));
-
-			$result = Validator\ConfigValidator::validate($config);
-			$this->assertTrue($result);
 		}
+
+		return $return;
 	}
 
-	/**
-	 * Test invalid configs
-	 */
-	public function testInvalidConfigs()
+	public function invalidConfigsData()
 	{
+		$return = array();
 		$path = __DIR__ .'/../../data/config/invalid';
 
 		$files = scandir($path);
 		foreach ($files AS $file) {
-			if (!preg_match('/\.yml$/ui', $file)) {
-				continue;
+			if (preg_match('/\.yml$/ui', $file)) {
+				$return[]  = [$path . "/" . $file];
 			}
+		}
 
-			$config = Yaml::parse(file_get_contents($path . "/" . $file));
+		return $return;
+	}
 
-			try {
-				$result = Validator\ConfigValidator::validate($config);
-				$this->assertFalse($result, sprintf('Config file %s should be invalid', $file));
+	/**
+	 * Test valid configs
+	 *
+	 * @dataProvider validConfigsData
+	 */
+	public function testValidConfigs($filePath)
+	{
+		$config = Yaml::parse($filePath);
 
-				$this->fail(sprintf('Config file %s should be invalid', $file));
-			} catch (InvalidConfigurationException $e) {
-			}
+		$result = Validator\ConfigValidator::validate($config);
+		$this->assertTrue($result);
+	}
+
+	/**
+	 * Test invalid configs
+	 *
+	 * @dataProvider invalidConfigsData
+	 */
+	public function testInvalidConfigs($filePath)
+	{
+		$config = Yaml::parse($filePath);
+
+		try {
+			$result = Validator\ConfigValidator::validate($config);
+			$this->assertFalse($result, sprintf('Config file %s should be invalid', $file));
+
+			$this->fail(sprintf('Config file %s should be invalid', $file));
+		} catch (InvalidConfigurationException $e) {
 		}
 	}
 }
