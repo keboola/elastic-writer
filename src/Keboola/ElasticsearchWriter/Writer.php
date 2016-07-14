@@ -8,6 +8,7 @@ namespace Keboola\ElasticsearchWriter;
 use Elasticsearch;
 use Keboola\Csv\CsvFile;
 use Keboola\ElasticsearchWriter\Options\LoadOptions;
+use Keboola\ElasticsearchWriter\Result\LoadResult;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -86,7 +87,7 @@ class Writer
 	 * @param CsvFile $file
 	 * @param LoadOptions $options
 	 * @param $primaryIndex
-	 * @return bool
+	 * @return LoadResult
 	 */
 	public function loadFile(CsvFile $file, LoadOptions $options, $primaryIndex = null)
 	{
@@ -197,6 +198,6 @@ class Writer
 			unset($responses);
 		}
 
-		return true;
+		return new LoadResult($i, $iBulk);
 	}
 }

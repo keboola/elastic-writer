@@ -43,27 +43,24 @@ class LoadTest extends AbstractTest
 		}
 	}
 
-	/**
-	 * Test bulk load
-	 */
-	public function testWriterWithDocumentId()
+	public function testBulkLoad()
 	{
+		$testBulkSize = 10;
 		$writer = $this->writer;
 
 		$options = new LoadOptions();
 		$options->setIndex($this->index)
 			->setType('language')
-			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
+			->setBulkSize($testBulkSize);
 
-		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
+		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'-large.csv');
+		$csv1ItemsCount = $this->countTable($csv1);
+
 		$result = $writer->loadFile($csv1, $options, 'id');
 
-		$this->assertTrue($result);
-
-		$csv2 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'-update.csv');
-		$result = $writer->loadFile($csv2, $options, 'id');
-
-		$this->assertTrue($result);
+		$this->assertInstanceOf('Keboola\ElasticsearchWriter\Result\LoadResult', $result);
+		$this->assertEquals($csv1ItemsCount, $result->getDocCount());
+		$this->assertEquals(ceil($csv1ItemsCount / $testBulkSize), $result->getBulkCount());
 
 		// test if index exists
 		$params = ['index' => $options->getIndex()];
@@ -84,7 +81,60 @@ class LoadTest extends AbstractTest
 		$count = $writer->getClient()->count($params);
 
 		$this->assertArrayHasKey('count', $count);
-		$this->assertEquals($this->countTable($csv1) + $this->countTable($csv2) - 1, $count['count']);
+		$this->assertEquals($csv1ItemsCount, $count['count']);
+	}
+
+	/**
+	 * Test bulk load
+	 */
+	public function testWriterWithDocumentId()
+	{
+		$testBulkSize = LoadOptions::DEFAULT_BULK_SIZE;
+		$writer = $this->writer;
+
+		$options = new LoadOptions();
+		$options->setIndex($this->index)
+			->setType('language')
+			->setBulkSize($testBulkSize);
+
+		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
+		$csv1ItemsCount = $this->countTable($csv1);
+
+		$result = $writer->loadFile($csv1, $options, 'id');
+
+		$this->assertInstanceOf('Keboola\ElasticsearchWriter\Result\LoadResult', $result);
+		$this->assertEquals($csv1ItemsCount, $result->getDocCount());
+		$this->assertEquals(ceil($csv1ItemsCount / $testBulkSize), $result->getBulkCount());
+
+		$csv2 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'-update.csv');
+		$csv2ItemsCount = $this->countTable($csv2);
+
+		$result = $writer->loadFile($csv2, $options, 'id');
+
+		$this->assertInstanceOf('Keboola\ElasticsearchWriter\Result\LoadResult', $result);
+		$this->assertEquals($csv2ItemsCount, $result->getDocCount());
+		$this->assertEquals(ceil($csv2ItemsCount / $testBulkSize), $result->getBulkCount());
+
+		// test if index exists
+		$params = ['index' => $options->getIndex()];
+		$settings = $writer->getClient()->indices()->getSettings($params);
+
+		$this->assertCount(1, $settings);
+		$this->assertArrayHasKey($options->getIndex(), $settings);
+		$this->assertArrayHasKey('settings', $settings[$options->getIndex()]);
+		$this->assertArrayHasKey('index', $settings[$options->getIndex()]['settings']);
+
+		$writer->getClient()->indices()->refresh(['index' => $options->getIndex()]);
+
+		$params = [
+			'index' => $options->getIndex(),
+			'type' => $options->getType(),
+		];
+
+		$count = $writer->getClient()->count($params);
+
+		$this->assertArrayHasKey('count', $count);
+		$this->assertEquals($csv1ItemsCount + $csv2ItemsCount - 1, $count['count']);
 	}
 
 	/**
@@ -110,21 +160,28 @@ class LoadTest extends AbstractTest
 	 */
 	public function testWriterWithDocumentIdTwice()
 	{
+		$testBulkSize = LoadOptions::DEFAULT_BULK_SIZE;
 		$writer = $this->writer;
 
 		$options = new LoadOptions();
 		$options->setIndex($this->index)
 			->setType('language')
-			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
+			->setBulkSize($testBulkSize);
 
 		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
-		$result = $writer->loadFile($csv1, $options, 'id');
-
-		$this->assertTrue($result);
+		$csv1ItemsCount = $this->countTable($csv1);
 
 		$result = $writer->loadFile($csv1, $options, 'id');
 
-		$this->assertTrue($result);
+		$this->assertInstanceOf('Keboola\ElasticsearchWriter\Result\LoadResult', $result);
+		$this->assertEquals($csv1ItemsCount, $result->getDocCount());
+		$this->assertEquals(ceil($csv1ItemsCount / $testBulkSize), $result->getBulkCount());
+
+		$result = $writer->loadFile($csv1, $options, 'id');
+
+		$this->assertInstanceOf('Keboola\ElasticsearchWriter\Result\LoadResult', $result);
+		$this->assertEquals($csv1ItemsCount, $result->getDocCount());
+		$this->assertEquals(ceil($csv1ItemsCount / $testBulkSize), $result->getBulkCount());
 
 		// test if index exists
 		$params = ['index' => $options->getIndex()];
@@ -145,7 +202,7 @@ class LoadTest extends AbstractTest
 		$count = $writer->getClient()->count($params);
 
 		$this->assertArrayHasKey('count', $count);
-		$this->assertEquals($this->countTable($csv1), $count['count']);
+		$this->assertEquals($csv1ItemsCount, $count['count']);
 	}
 
 	/**
@@ -153,21 +210,28 @@ class LoadTest extends AbstractTest
 	 */
 	public function testWriterTwice()
 	{
+		$testBulkSize = LoadOptions::DEFAULT_BULK_SIZE;
 		$writer = $this->writer;
 
 		$options = new LoadOptions();
 		$options->setIndex($this->index)
 			->setType('language')
-			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
+			->setBulkSize($testBulkSize);
 
 		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
-		$result = $writer->loadFile($csv1, $options, null);
-
-		$this->assertTrue($result);
+		$csv1ItemsCount = $this->countTable($csv1);
 
 		$result = $writer->loadFile($csv1, $options, null);
 
-		$this->assertTrue($result);
+		$this->assertInstanceOf('Keboola\ElasticsearchWriter\Result\LoadResult', $result);
+		$this->assertEquals($csv1ItemsCount, $result->getDocCount());
+		$this->assertEquals(ceil($csv1ItemsCount / $testBulkSize), $result->getBulkCount());
+
+		$result = $writer->loadFile($csv1, $options, null);
+
+		$this->assertInstanceOf('Keboola\ElasticsearchWriter\Result\LoadResult', $result);
+		$this->assertEquals($csv1ItemsCount, $result->getDocCount());
+		$this->assertEquals(ceil($csv1ItemsCount / $testBulkSize), $result->getBulkCount());
 
 		// test if index exists
 		$params = ['index' => $options->getIndex()];
