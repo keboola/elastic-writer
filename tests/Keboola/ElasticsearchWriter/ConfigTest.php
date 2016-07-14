@@ -61,13 +61,14 @@ class ConfigTest extends AbstractTest
 	 */
 	public function testInvalidConfigs($filePath)
 	{
+		$fileInfo = new \SplFileInfo($filePath);
 		$config = Yaml::parse($filePath);
 
 		try {
 			$result = Validator\ConfigValidator::validate($config);
-			$this->assertFalse($result, sprintf('Config file %s should be invalid', $file));
+			$this->assertFalse($result, sprintf('Config file %s should be invalid', $fileInfo->getFilename()));
 
-			$this->fail(sprintf('Config file %s should be invalid', $file));
+			$this->fail(sprintf('Config file %s should be invalid', $fileInfo->getFilename()));
 		} catch (InvalidConfigurationException $e) {
 		}
 	}
