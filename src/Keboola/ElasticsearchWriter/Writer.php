@@ -7,6 +7,7 @@ namespace Keboola\ElasticsearchWriter;
 
 use Elasticsearch;
 use Keboola\Csv\CsvFile;
+use Keboola\ElasticsearchWriter\Exception\UserException;
 use Keboola\ElasticsearchWriter\Options\LoadOptions;
 use Keboola\ElasticsearchWriter\Result\LoadResult;
 use Psr\Log\LoggerInterface;
@@ -45,6 +46,95 @@ class Writer
 	{
 		return $this->client;
 	}
+
+	public function run($action, array $parameters)
+	{
+		$actionMethod = $action . 'Action';
+		if (!method_exists($this, $actionMethod)) {
+			throw new UserException(sprintf("Action '%s' does not exist.", $this['action']));
+		}
+
+		return $this->$actionMethod($parameters);
+	}
+
+	public function mappingAction()
+	{
+		$return = ['indices' => []];
+
+		foreach ($this->listIndices() AS $indice) {
+			$return['indices'][] = [
+				'id' => $indice['id'],
+				'mappings' => $this->listIndiceMappings($indice['id']),
+			];
+		}
+
+		return $return;
+	}
+
+	public function runAction($parameters)
+	{
+		$path = $parameters["path"];
+
+		$skipped = 0;
+		$processed = 0;
+
+		foreach ($parameters['tables'] AS $table) {
+			$sourceType = !empty($table['tableId']) ? 'table' : 'file';
+
+			if ($sourceType == 'table') {
+				$logPrefix = sprintf('Table %s - ', $table['tableId']);
+			} else {
+				$logPrefix = sprintf('File %s - ', $table['file']);
+			}
+
+			if (empty($table['export'])) {
+				$this->logger->info($logPrefix . 'Skipped');
+				$skipped++;
+				continue;
+			}
+
+			$this->logger->info($logPrefix . 'Export start');
+
+			// load options
+			$options = new Options\LoadOptions();
+			$options->setIndex($table['index'])
+				->setType($table['type']);
+
+			if (!empty($config['elastic']['bulkSize'])) {
+				$options->setBulkSize($config['elastic']['bulkSize']);
+			}
+
+			$idColumn = !empty($table['id']) ? $table['id'] : null;
+
+
+			// source file
+			if (!empty($table['tableId'])) {
+				$file = new CsvFile(sprintf('%s/%s.csv', $path, $table['tableId']));
+			} else {
+				$file = new CsvFile(sprintf('%s/%s', $path, $table['file']));
+
+				if (mb_strtolower($file->getExtension()) !== 'csv') {
+					throw new Exception\UserException($logPrefix . 'Export failed. Only csv files are supported');
+				}
+			}
+
+			if (!$file->isFile()) {
+				throw new Exception\UserException($logPrefix . 'Export failed. Missing csv file');
+			}
+
+			$result = $this->loadFile($file, $options, $idColumn);
+			if (!$result) {
+				throw new Exception\UserException($logPrefix . 'Export failed');
+			} else {
+				$this->logger->info($logPrefix . 'Export finished', array());
+			}
+
+			$processed++;
+		}
+
+		$this->logger->info(sprintf("Exported %d tables. %d was skipped", $processed, $skipped));
+	}
+
 
 	/**
 	 * List of all indices
