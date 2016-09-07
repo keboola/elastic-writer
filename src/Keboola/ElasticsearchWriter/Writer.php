@@ -88,7 +88,9 @@ class Writer
 				];
 			}
 
-			$params['body'][] = $lineData;
+			$params['body'][] = array_map(function($value) {
+   				return $value === "" ? NULL : $value;
+			}, $lineData);
 
 			if ($i % $options->getBulkSize() == 0) {
 				$this->logger->info(sprintf(
