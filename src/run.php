@@ -19,8 +19,8 @@ require_once(__DIR__ . "/../bootstrap.php");
 const APP_NAME = 'wr-elasticsearch';
 
 $logger = new Logger(APP_NAME, array(
-	(new StreamHandler('php://stdout', Logger::INFO))->setFormatter(new LineFormatter("%message%\n")),
-	(new StreamHandler('php://stderr', Logger::ERROR))->setFormatter(new LineFormatter("%message%\n")),
+	(new StreamHandler('php://stdout', Logger::INFO))->setFormatter(new LineFormatter()),
+	(new StreamHandler('php://stderr', Logger::ERROR))->setFormatter(new LineFormatter()),
 ));
 
 set_error_handler(
