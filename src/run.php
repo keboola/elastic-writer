@@ -139,7 +139,9 @@ try {
 	$logger->error($e->getMessage(), array());
 	exit(2);
 } catch (\Exception $e) {
-	$logger->error($e->getMessage(), array());
+	$logger->error($e->getMessage(), [
+		'trace' => $e->getTraceAsString()
+	]);
 	exit(2);
 }
 
