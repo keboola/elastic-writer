@@ -113,7 +113,14 @@ class Writer
 					if (!empty($responses['items'])) {
 						foreach ($responses['items'] as $itemResult) {
 							if (!empty($itemResult['index']['error'])) {
-								$this->logger->error(sprintf("ES error: %s", $itemResult['index']['error']));
+								if (is_array($itemResult['index']['error'])) {
+									$this->logger->error(sprintf(
+										"ES error: %s",
+										$this->getErrorMessageFromErrorField($itemResult['index']['error'])
+									));
+								} else {
+									$this->logger->error(sprintf("ES error: %s", $itemResult['index']['error'] ));
+								}
 								return false;
 							}
 						}
@@ -148,7 +155,14 @@ class Writer
 				if (!empty($responses['items'])) {
 					foreach ($responses['items'] as $itemResult) {
 						if (!empty($itemResult['index']['error'])) {
-							$this->logger->error(sprintf("ES error: %s", $itemResult['index']['error']));
+							if (is_array($itemResult['index']['error'])) {
+								$this->logger->error(sprintf(
+									"ES error: %s",
+									$this->getErrorMessageFromErrorField($itemResult['index']['error'])
+								));
+							} else {
+								$this->logger->error(sprintf("ES error: %s", $itemResult['index']['error'] ));
+							}
 							return false;
 						}
 					}
@@ -161,5 +175,21 @@ class Writer
 		}
 
 		return true;
+	}
+
+	/**
+	 * Creates error message string from error field
+	 * @param array $error
+	 * @return string
+	 */
+	private function getErrorMessageFromErrorField(array $error)
+	{
+		$message = [];
+		foreach (['type', 'reason'] as $key) {
+			if (isset($error[$key])) {
+				$message[] = $error[$key];
+			}
+		}
+		return implode('; ', $message);
 	}
 }
