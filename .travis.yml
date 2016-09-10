@@ -1,13 +1,28 @@
 sudo: required
 
+language: bash
+
 services:
   - docker
 
+env:
+  DOCKER_COMPOSE_VERSION: 1.6.2
+
 before_install:
+  - sudo apt-get update
+  - sudo apt-get -o Dpkg::Options::="--force-confnew" -y install docker-engine
+
+before_script:
+  - docker -v
   - docker-compose -v
+  - docker-compose build
 
 script:
-  - docker-compose run app22
-  - docker-compose run app13
+  - docker-compose run --rm -e EX_ES_HOST=elasticsearch13 -e EX_ES_HOST_PORT=9200 app-tests
+  - docker-compose run --rm -e EX_ES_HOST=elasticsearch22 -e EX_ES_HOST_PORT=9200 app-tests
+
+after_success:
+  - docker images
+
 notifications:
   slack: $SLACK_INTEGRATION_DOMAIN:$SLACK_INTEGRATION_KEY
