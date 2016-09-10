@@ -1,13 +1,28 @@
 sudo: required
 
+language: bash
+
 services:
   - docker
 
-before_install:
+before_script:
+  - docker -v
   - docker-compose -v
+  - docker-compose build
 
 script:
-  - docker-compose run app22
-  - docker-compose run app13
+  - docker-compose run --rm -e EX_ES_HOST=elasticsearch13 -e EX_ES_HOST_PORT=9200 app-tests
+  - docker-compose run --rm -e EX_ES_HOST=elasticsearch22 -e EX_ES_HOST_PORT=9200 app-tests
+
+after_success:
+  - docker images
+
+deploy:
+  provider: script
+  skip_cleanup: true
+  script: ./deploy.sh
+  on:
+    tags: true
+
 notifications:
   slack: $SLACK_INTEGRATION_DOMAIN:$SLACK_INTEGRATION_KEY
