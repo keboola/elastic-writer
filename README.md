@@ -1,10 +1,12 @@
-# Elasticsearch Writer [![Build Status](https://travis-ci.org/keboola/elastic-writer.svg?branch=master)](https://travis-ci.org/keboola/elastic-writer)
+# Elasticsearch Writer
+
+[![Build Status](https://travis-ci.org/keboola/elastic-writer.svg?branch=master)](https://travis-ci.org/keboola/elastic-writer)
 
 Writer expects that mapping of types and indexes in your Elasticsearch exists. If it is missing and you have enabled [automatic index creation](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html#index-creation), new mapping will be created.
 
----
+--
 
-# Configuration
+## Configuration
 
 - Configuration has 2 parts - `elastic` and `tables`
 - The `elastic` section defines connection info and import config
@@ -21,26 +23,28 @@ Writer expects that mapping of types and indexes in your Elasticsearch exists. I
     - `id` *(optional)* - determines in which column of table is the document's ID/primary key
     - `export` - whether this table shall be exported to ES
 
-## Example
+### Example
 
+```json
+{
+    "elastic": {
+        "host": "my.hostname.com",
+        "port": 9200,
+        "bulkSize": 10000
+    },
+    "tables": [
         {
-                "elastic": {
-                    "host": "my.hostname.com",
-                    "port": 9200,
-                    "bulkSize": 10000
-                },
-                "tables": [
-                    {
-                        "file": "products.csv",
-                        "index": "production",
-                        "type": "products",
-                        "id": "id",
-                        "export": true
-                    }
-                ]
+            "file": "products.csv",
+            "index": "production",
+            "type": "products",
+            "id": "id",
+            "export": true
         }
+    ]
+}
+```
 
-# Kebooola Connection
+## Configuring in Keboola Connection
 
 Elasticsearch Writer is integrated in Keboola Connection.
 
