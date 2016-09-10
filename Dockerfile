@@ -11,11 +11,6 @@ RUN curl -sS https://getcomposer.org/installer | php \
 
 COPY docker/php.ini /usr/local/etc/php/php.ini
 
-RUN curl --location --silent --show-error --fail \
-        https://github.com/Barzahlen/waitforservices/releases/download/v0.3/waitforservices \
-        > /usr/local/bin/waitforservices && \
-    chmod +x /usr/local/bin/waitforservices
-
 COPY . /code
 
 WORKDIR /code

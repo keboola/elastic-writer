@@ -10,7 +10,8 @@ services:
 
   app-tests:
     image: keboola/elastic-writer
-    entrypoint: "./phpunit.sh"
+    entrypoint: sh
+    command: -c 'sleep 10 && ./phpunit.sh'
     tty: true
     stdin_open: true
     links:
