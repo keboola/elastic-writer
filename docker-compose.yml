@@ -7,6 +7,12 @@ services:
     image: keboola/elastic-writer
     tty: true
     stdin_open: true
+    volumes:
+      - ./:/code
+    links:
+      - elasticsearch13
+      - elasticsearch22
+    entrypoint: bash
 
   app-tests:
     image: keboola/elastic-writer
