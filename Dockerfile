@@ -2,7 +2,7 @@ FROM php:7.0
 MAINTAINER Erik Zigo <erik.zigo@keboola.com>
 
 RUN apt-get update -q \
-  && apt-get install unzip git libxml2-dev -y --no-install-recommends
+  && apt-get install ssh unzip git libxml2-dev -y --no-install-recommends
 
 WORKDIR /root
 
