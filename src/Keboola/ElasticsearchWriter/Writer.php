@@ -9,6 +9,7 @@ use Elasticsearch;
 use Keboola\Csv\CsvFile;
 use Keboola\ElasticsearchWriter\Exception\UserException;
 use Keboola\ElasticsearchWriter\Options\LoadOptions;
+use Keboola\SSHTunnel\SSH;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

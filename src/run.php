@@ -5,15 +5,14 @@
  */
 use Symfony\Component\Yaml\Yaml;
 use Keboola\ElasticsearchWriter\Exception;
-use Keboola\ElasticsearchWriter\Writer;
 use Keboola\ElasticsearchWriter\Options;
 use Keboola\ElasticsearchWriter\Validator;
+use Keboola\ElasticsearchWriter\Application;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\NullHandler;
 use Monolog\Formatter\LineFormatter;
-use Keboola\Csv\CsvFile;
-use \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 require_once(__DIR__ . "/../bootstrap.php");
 
@@ -65,24 +64,22 @@ try {
 		$logger->setHandlers(array(new NullHandler(Logger::INFO)));
 	}
 
-	$host = sprintf(
-		'%s:%s',
-		!empty($config['elastic']['#host']) ? $config['elastic']['#host'] : $config['elastic']['host'],
-		$config['elastic']['port']
-	);
-
-	$config['path'] = $arguments["data"] . '/in/tables';
-
-	$writer = new Writer($host);
-	$writer->enableLogger($logger);
-
-	try {
-		$writer->getClient()->ping();
-	} catch (\Exception $e) {
-		throw new Exception\UserException("Connection to elasticsearch failed");
+	// move encrypted params to non-ecrypted
+	if (isset($config['elastic']['#host'])) {
+		$config['elastic']['host'] = $config['elastic']['#host'];
+		unset($config['elastic']['#host']);
 	}
 
-	$result = $writer->run($action, $config);
+	if (isset($config['ssh']['keys']['#private'])) {
+		$config['ssh']['keys']['private'] = $config['ssh']['keys']['#private'];
+		unset($config['ssh']['keys']['#private']);
+	}
+
+	// data path
+	$config['path'] = $arguments["data"] . '/in/tables';
+
+	$app = new Application($config, $logger);
+	$result = $app->run($action, $config);
 
 	if ($action !== 'run') {
 		echo json_encode($result);
