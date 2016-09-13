@@ -10,6 +10,7 @@ use Keboola\ElasticsearchWriter\Options;
 use Keboola\ElasticsearchWriter\Validator;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
+use Monolog\Handler\NullHandler;
 use Monolog\Formatter\LineFormatter;
 use Keboola\Csv\CsvFile;
 use \Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -32,12 +33,17 @@ set_error_handler(
 	}
 );
 
-try {
-	$arguments = getopt("d::", array("data::"));
+$action = 'run';
 
+
+try {
+	$arguments = getopt("d::", ["data::"]);
 	if (!isset($arguments["data"])) {
-		print "Data folder not set.";
-		exit(1);
+		throw new Exception\UserException(Exception\UserException::ERR_DATA_PARAM);
+	}
+
+	if (!file_exists($arguments["data"] . "/config.yml")) {
+		throw new Exception\UserException(Exception\UserException::ERR_MISSING_CONFIG);
 	}
 
 	$config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
@@ -52,7 +58,12 @@ try {
 		throw new Exception\UserException($e->getMessage());
 	}
 
+	$action = isset($config['action']) ? $config['action'] : $action;
 	$config = $config['parameters'];
+
+	if ($action !== 'run') {
+		$logger->setHandlers(array(new NullHandler(Logger::INFO)));
+	}
 
 	$host = sprintf(
 		'%s:%s',
@@ -60,7 +71,7 @@ try {
 		$config['elastic']['port']
 	);
 
-	$path = $arguments["data"] . '/in/tables';
+	$config['path'] = $arguments["data"] . '/in/tables';
 
 	$writer = new Writer($host);
 	$writer->enableLogger($logger);
@@ -71,69 +82,21 @@ try {
 		throw new Exception\UserException("Connection to elasticsearch failed");
 	}
 
-	$skipped = 0;
-	$processed = 0;
+	$result = $writer->run($action, $config);
 
-	$requiredParams = array();
-
-	foreach ($config['tables'] AS $table) {
-		$sourceType = !empty($table['tableId']) ? 'table' : 'file';
-
-		if ($sourceType == 'table') {
-			$logPrefix = sprintf('Table %s - ', $table['tableId']);
-		} else {
-			$logPrefix = sprintf('File %s - ', $table['file']);
-		}
-
-		if (empty($table['export'])) {
-			$logger->info($logPrefix . 'Skipped');
-			$skipped++;
-			continue;
-		}
-
-		$logger->info($logPrefix . 'Export start');
-
-		// load options
-		$options = new Options\LoadOptions();
-		$options->setIndex($table['index'])
-			->setType($table['type']);
-
-		if (!empty($config['elastic']['bulkSize'])) {
-			$options->setBulkSize($config['elastic']['bulkSize']);
-		}
-
-		$idColumn = !empty($table['id']) ? $table['id'] : null;
-
-
-		// source file
-		if (!empty($table['tableId'])) {
-			$file = new CsvFile(sprintf('%s/%s.csv', $path, $table['tableId']));
-		} else {
-			$file = new CsvFile(sprintf('%s/%s', $path, $table['file']));
-
-			if (mb_strtolower($file->getExtension()) !== 'csv') {
-				throw new Exception\UserException($logPrefix . 'Export failed. Only csv files are supported');
-			}
-		}
-
-		if (!$file->isFile()) {
-			throw new Exception\UserException($logPrefix . 'Export failed. Missing csv file');
-		}
-
-		$result = $writer->loadFile($file, $options, $idColumn);
-		if (!$result) {
-			throw new Exception\UserException($logPrefix . 'Export failed');
-		} else {
-			$logger->info($logPrefix . 'Export finished', array());
-		}
-
-		$processed++;
+	if ($action !== 'run') {
+		echo json_encode($result);
 	}
 
-	$logger->info(sprintf("Elasticsearch writer finished. Exported %d tables. %d was skipped", $processed, $skipped));
+	$logger->info("Elasticsearch writer finished successfully.");
 	exit(0);
 } catch (Exception\UserException $e) {
 	$logger->error($e->getMessage(), array());
+
+	if ($action !== 'run') {
+		echo $e->getMessage();
+	}
+
 	exit(1);
 } catch (Exception\ExportException $e) {
 	$logger->error($e->getMessage(), array());
