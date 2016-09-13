@@ -28,7 +28,7 @@ class Application
 	{
 		$this->logger = ($logger) ?: new NullLogger();
 
-		if (isset($parameters['ssh']['enabled']) && $parameters['ssh']['enabled']) {
+		if (isset($parameters['elastic']['ssh']['enabled']) && $parameters['elastic']['ssh']['enabled']) {
 			$parameters = $this->createSshTunnel($parameters);
 		}
 
@@ -42,14 +42,14 @@ class Application
 
 	private function createSshTunnel($parameters)
 	{
-		$sshConfig = $parameters['ssh'];
+		$sshConfig = $parameters['elastic']['ssh'];
 
-		// check params
-		foreach (['keys', 'sshHost'] as $k) {
-			if (empty($sshConfig[$k])) {
-				throw new UserException(sprintf("Parameter %s is missing.", $k));
-			}
-		}
+//		// check params
+//		foreach (['keys', 'sshHost', 'user'] as $k) {
+//			if (empty($sshConfig[$k])) {
+//				throw new UserException(sprintf("Parameter %s is missing.", $k));
+//			}
+//		}
 
 		if (empty($sshConfig['user'])) {
 			$sshConfig['user'] = $parameters['user'];
@@ -61,6 +61,10 @@ class Application
 
 		if (empty($sshConfig['remotePort'])) {
 			$sshConfig['remotePort'] = $parameters['elastic']['port'];
+		}
+
+		if (empty($sshConfig['localPort'])) {
+			$sshConfig['localPort'] = 19200;
 		}
 
 		if (empty($sshConfig['sshPort'])) {

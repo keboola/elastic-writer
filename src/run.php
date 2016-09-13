@@ -51,6 +51,7 @@ try {
 		exit(2);
 	}
 
+	//@FIXME move to application, refactor with symfony config mapping
 	try {
 		Validator\ConfigValidator::validate($config);
 	} catch (InvalidConfigurationException $e) {
@@ -70,9 +71,9 @@ try {
 		unset($config['elastic']['#host']);
 	}
 
-	if (isset($config['ssh']['keys']['#private'])) {
-		$config['ssh']['keys']['private'] = $config['ssh']['keys']['#private'];
-		unset($config['ssh']['keys']['#private']);
+	if (isset($config['elastic']['ssh']['keys']['#private'])) {
+		$config['elastic']['ssh']['keys']['private'] = $config['elastic']['ssh']['keys']['#private'];
+		unset($config['elastic']['ssh']['keys']['#private']);
 	}
 
 	// data path

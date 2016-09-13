@@ -27,6 +27,25 @@ class ConfigValidator
 		return true;
 	}
 
+	private static function sshConfigValidation(array $config)
+	{
+		// required params
+		if (!isset($config['keys'])) {
+			throw new InvalidConfigurationException('Missing SSH keys');
+		}
+		if (!isset($config['sshHost'])) {
+			throw new InvalidConfigurationException('Missing SSH host');
+		}
+		if (!isset($config['user'])) {
+			throw new InvalidConfigurationException('Missing SSH user');
+		}
+		if (!isset($config['keys']['private']) && !isset($config['keys']['#private'])) {
+			throw new InvalidConfigurationException('Missing SSH private key');
+		}
+
+		return true;
+	}
+
 	/**
 	 * @param array $config
 	 * @return bool
@@ -82,6 +101,10 @@ class ConfigValidator
 		}
 
 		self::tablesConfigValidation($config['tables']);
+
+		if (isset($config['elastic']['ssh'])) {
+			self::sshConfigValidation($config['elastic']['ssh']);
+		}
 
 		return true;
 	}

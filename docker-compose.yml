@@ -12,6 +12,7 @@ services:
     links:
       - elasticsearch13
       - elasticsearch22
+      - sshproxy
     entrypoint: bash
 
   app-tests:
@@ -23,6 +24,7 @@ services:
     links:
       - elasticsearch13
       - elasticsearch22
+      - sshproxy
 
   elasticsearch13:
     image: elasticsearch:1.3
@@ -31,3 +33,14 @@ services:
   elasticsearch22:
     image: elasticsearch:2.2
     command: elasticsearch -Des.cluster.name="SAPI-Testing-22"
+
+  sshproxy:
+    build: ./tests/env/sshproxy
+    volumes:
+        - ./tests/env/sshproxy:/code
+    working_dir: /code
+    ports:
+      - "2222:22"
+    links:
+      - elasticsearch13
+      - elasticsearch22
