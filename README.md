@@ -13,7 +13,13 @@ Writer expects that mapping of types and indexes in your Elasticsearch exists. I
     - `host` - server address
     - `port` - elasticsearch listening port
     - `bulkSize` *(optional)* - size of a batch to upload to Elasticsearch *(default is 10.000)*
-    
+    - `ssh` - SSH tunnel configuration
+        - `enabled` - enable SSH tunnel for connection to Elasticsearch
+        -  `sshHost` - address of the SSH server
+        -  `port` *(optional)* - SSH listening port *(default is 22)*
+        -  `user` - SSH login
+        -  `keys`
+            - `private` - Your private key used for authentication  
 - The `tables` section defines database tables, their columns and their data types
     - `file` or `tableId`
         - `file` - CSV file of the table we want to write into Elasticsearch (see https://github.com/keboola/docker-bundle/blob/master/ENVIRONMENT.md#input-mapping) for more info about Input Mapping
@@ -31,6 +37,35 @@ Writer expects that mapping of types and indexes in your Elasticsearch exists. I
         "host": "my.hostname.com",
         "port": 9200,
         "bulkSize": 10000
+    },
+    "tables": [
+        {
+            "file": "products.csv",
+            "index": "production",
+            "type": "products",
+            "id": "id",
+            "export": true
+        }
+    ]
+}
+```
+
+### Example with SSH
+
+```json
+{
+    "elastic": {
+        "host": "my.hostname.com",
+        "port": 9200,
+        "bulkSize": 10000,
+        "ssh": {
+            "sshHost": "10.112.1.1",
+            "port": 22,
+            "user": "extractor",
+            "keys": {
+                "private": "YOUR_PRIVATE_KEY_WITHOUT_PASSPHRASE"
+            }
+        }
     },
     "tables": [
         {
