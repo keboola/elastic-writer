@@ -16,7 +16,7 @@
     "symfony/yaml": "~2.6.3",
     "elasticsearch/elasticsearch": "^2.0",
     "monolog/monolog": "1.17.1",
-    "keboola/ssh-tunnel": "^1.0"
+    "keboola/ssh-tunnel": "dev-erik"
   },
   "require-dev": {
     "phpunit/phpunit": "~5.0",
