@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "abb124634cfef64d7abce625b9407648",
-    "content-hash": "e25e20561b21e4e804dfc19ddca30711",
+    "hash": "6444ae21c5dfa62ec3ac09e37f34e119",
+    "content-hash": "63a909462569a739e958ace5be16d1a4",
     "packages": [
         {
             "name": "elasticsearch/elasticsearch",
@@ -195,16 +195,16 @@
         },
         {
             "name": "keboola/ssh-tunnel",
-            "version": "1.0.0",
+            "version": "dev-erik",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/ssh-tunnel.git",
-                "reference": "6f1201964b9e2aebd3b2620487b5d7dbaadb40c1"
+                "reference": "34c08382a142f8992456b4961f639e475aafed5e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/ssh-tunnel/zipball/6f1201964b9e2aebd3b2620487b5d7dbaadb40c1",
-                "reference": "6f1201964b9e2aebd3b2620487b5d7dbaadb40c1",
+                "url": "https://api.github.com/repos/keboola/ssh-tunnel/zipball/34c08382a142f8992456b4961f639e475aafed5e",
+                "reference": "34c08382a142f8992456b4961f639e475aafed5e",
                 "shasum": ""
             },
             "require": {
@@ -230,7 +230,7 @@
                 }
             ],
             "description": "Simple class for SSH tunneling",
-            "time": "2016-09-05 12:43:51"
+            "time": "2016-09-14 16:00:03"
         },
         {
             "name": "monolog/monolog",
@@ -2318,6 +2318,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "keboola/ssh-tunnel": 20,
         "codeclimate/php-test-reporter": 20
     },
     "prefer-stable": false,
