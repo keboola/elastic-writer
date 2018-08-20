@@ -6,6 +6,7 @@
 namespace Keboola\ElasticsearchWriter;
 
 use Elasticsearch;
+use Keboola\Csv\CsvFile;
 use Keboola\ElasticsearchWriter\Exception\UserException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -73,7 +74,6 @@ class RunTest extends AbstractTest
 				"elastic" => [
 					"host" => getenv('EX_ES_HOST'),
 					"port" => getenv('EX_ES_HOST_PORT'),
-					"bulkSize" => 10
 				],
 				"tables" => [
 					[
@@ -102,6 +102,50 @@ class RunTest extends AbstractTest
 
 		$this->assertEquals(0, $returnCode);
 		$this->assertRegExp('/Elasticsearch writer finished successfully/ui', $lastOutput);
+
+		$this->assertEquals(1, $this->parseBatchCountFromOutput($output));
+	}
+
+	public function testRunWithBulkSizeAction()
+	{
+		$config = [
+			"parameters" => [
+				"elastic" => [
+					"host" => getenv('EX_ES_HOST'),
+					"port" => getenv('EX_ES_HOST_PORT'),
+					"bulkSize" => 30
+				],
+				"tables" => [
+					[
+						"file" => "language-large.csv",
+						"index" => $this->index,
+						"type" => "language",
+						"id" => "id",
+						"export" => true,
+					]
+				]
+			]
+		];
+
+		$yaml = Yaml::dump($config);
+
+		$inTablesDir = './tests/data/run/in/tables';
+		if (!is_dir($inTablesDir)) {
+			mkdir($inTablesDir, 0777, true);
+		}
+
+		file_put_contents('./tests/data/run/config.yml', $yaml);
+
+		copy('./tests/data/csv/language-large.csv', $inTablesDir . '/language-large.csv');
+
+		$lastOutput = exec('php ./src/run.php --data=./tests/data/run', $output, $returnCode);
+
+		$this->assertEquals(0, $returnCode);
+		$this->assertRegExp('/Elasticsearch writer finished successfully/ui', $lastOutput);
+
+		$expectedBatchCount = ceil($this->countTable(new CsvFile($inTablesDir . '/language-large.csv')) / 30);
+		$this->assertEquals($expectedBatchCount, $this->parseBatchCountFromOutput($output));
+
 	}
 
 	public function testMappingAction()

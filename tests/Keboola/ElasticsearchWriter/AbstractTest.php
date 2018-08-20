@@ -31,4 +31,20 @@ abstract class AbstractTest extends \PHPUnit_Framework_TestCase
 
 		return $linesCount;
 	}
+
+	/**
+	 * @param array $output
+	 * @return int
+	 */
+	protected function parseBatchCountFromOutput(array $output)
+	{
+		$count = 0;
+		foreach ($output as $line) {
+			if (preg_match('/Write .+ batch [0-9]+ to .+ start/ui', $line)) {
+				$count++;
+			}
+		}
+
+		return $count;
+	}
 }
