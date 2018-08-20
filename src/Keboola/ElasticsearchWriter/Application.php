@@ -136,8 +136,8 @@ class Application
 			$options->setIndex($table['index'])
 				->setType($table['type']);
 
-			if (!empty($config['elastic']['bulkSize'])) {
-				$options->setBulkSize($config['elastic']['bulkSize']);
+			if (!empty($parameters['elastic']['bulkSize'])) {
+				$options->setBulkSize($parameters['elastic']['bulkSize']);
 			}
 
 			$idColumn = !empty($table['id']) ? $table['id'] : null;
