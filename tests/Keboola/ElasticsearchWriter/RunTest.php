@@ -9,7 +9,7 @@ use Elasticsearch;
 use Keboola\ElasticsearchWriter\Exception\UserException;
 use Symfony\Component\Yaml\Yaml;
 
-class RunTest extends \PHPUnit_Framework_TestCase
+class RunTest extends AbstractTest
 {
 	/**
 	 * @var Writer
@@ -102,7 +102,6 @@ class RunTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertEquals(0, $returnCode);
 		$this->assertRegExp('/Elasticsearch writer finished successfully/ui', $lastOutput);
-		$this->assertCount(6, $output);
 	}
 
 	public function testMappingAction()
@@ -142,7 +141,6 @@ class RunTest extends \PHPUnit_Framework_TestCase
 
 		$this->assertEquals(0, $returnCode);
 		$this->assertRegExp('/Elasticsearch writer finished successfully/ui', $lastOutput);
-		$this->assertCount(6, $output);
 
 		$config = [
 			"action" => "mapping",
