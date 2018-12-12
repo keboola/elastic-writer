@@ -126,8 +126,11 @@ class Writer
 								return false;
 							}
 						}
+
+						unset($responses['items']);
 					}
 
+					$this->logger->error(sprintf("ES error: %s", json_encode($responses)));
 					return false;
 				}
 				
@@ -168,8 +171,11 @@ class Writer
 							return false;
 						}
 					}
+
+					unset($responses['items']);
 				}
 
+				$this->logger->error(sprintf("ES error: %s", json_encode($responses)));
 				return false;
 			}
 
