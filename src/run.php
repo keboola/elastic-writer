@@ -96,13 +96,16 @@ try {
 	}
 
 	exit(1);
-} catch (Exception\ExportException $e) {
-	$logger->error($e->getMessage(), array());
-	exit(2);
-} catch (\Exception $e) {
-	$logger->error($e->getMessage(), [
-		'trace' => $e->getTraceAsString()
-	]);
+} catch (\Throwable $e) {
+	$logger->critical(
+		get_class($e) . ':' . $e->getMessage(),
+		[
+			'errFile' => $e->getFile(),
+			'errLine' => $e->getLine(),
+			'errCode' => $e->getCode(),
+			'errTrace' => $e->getTraceAsString(),
+			'errPrevious' => $e->getPrevious() ? get_class($e->getPrevious()) : '',
+		]
+	);
 	exit(2);
 }
-
