@@ -114,7 +114,6 @@ class Writer
 				if ($responses['errors'] !== false) {
 					if (!empty($responses['items'])) {
 						foreach ($responses['items'] as $itemResult) {
-							// error message
 							if (!empty($itemResult['index']['error'])) {
 								if (is_array($itemResult['index']['error'])) {
 									$this->logger->error(sprintf(
@@ -124,12 +123,6 @@ class Writer
 								} else {
 									$this->logger->error(sprintf("ES error: %s", $itemResult['index']['error'] ));
 								}
-								return false;
-							}
-
-							// error status
-							if (!empty($itemResult['index']['status']) && $itemResult['index']['status'] >= 400) {
-								$this->logger->error(sprintf("ES error: %s", json_encode($itemResult['index'])));
 								return false;
 							}
 						}
@@ -166,7 +159,6 @@ class Writer
 			if ($responses['errors'] !== false) {
 				if (!empty($responses['items'])) {
 					foreach ($responses['items'] as $itemResult) {
-						// error message
 						if (!empty($itemResult['index']['error'])) {
 							if (is_array($itemResult['index']['error'])) {
 								$this->logger->error(sprintf(
@@ -176,12 +168,6 @@ class Writer
 							} else {
 								$this->logger->error(sprintf("ES error: %s", $itemResult['index']['error'] ));
 							}
-							return false;
-						}
-
-						// error status
-						if (!empty($itemResult['index']['status']) && $itemResult['index']['status'] >= 400) {
-							$this->logger->error(sprintf("ES error: %s", json_encode($itemResult['index'])));
 							return false;
 						}
 					}
