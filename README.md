@@ -16,10 +16,10 @@ Writer expects that mapping of types and indexes in your Elasticsearch exists. I
     - `ssh` - SSH tunnel configuration
         - `enabled` - enable SSH tunnel for connection to Elasticsearch
         -  `sshHost` - address of the SSH server
-        -  `port` *(optional)* - SSH listening port *(default is 22)*
+        -  `sshPort` *(optional)* - SSH listening port *(default is 22)*
         -  `user` - SSH login
         -  `keys`
-            - `private` - Your private key used for authentication  
+            - `private` - Your private key used for authentication. Note that keys MUST have maintain linebreaks every 72 bytes, according to rfc4716 section 3. When copying the contents of a key file, it is important to replace all true linebreaks with "\n" so that it can be accepted by the configuration editor, and be parsed correctly in order to establish the SSH tunnel successfully.
 - The `tables` section defines database tables, their columns and their data types
     - `file` or `tableId`
         - `file` - CSV file of the table we want to write into Elasticsearch (see https://github.com/keboola/docker-bundle/blob/master/ENVIRONMENT.md#input-mapping) for more info about Input Mapping
@@ -59,11 +59,12 @@ Writer expects that mapping of types and indexes in your Elasticsearch exists. I
         "port": 9200,
         "bulkSize": 10000,
         "ssh": {
+            "enabled": true,
             "sshHost": "10.112.1.1",
-            "port": 22,
+            "sshPort": 22,
             "user": "extractor",
             "keys": {
-                "private": "YOUR_PRIVATE_KEY_WITHOUT_PASSPHRASE"
+                "private": "YOUR\nPRIVATE\nKEY\nWITHOUT\nPASSPHRASE"
             }
         }
     },
