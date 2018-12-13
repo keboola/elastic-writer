@@ -8,6 +8,8 @@ namespace Keboola\ElasticsearchWriter;
 use Elasticsearch;
 use Keboola\Csv\CsvFile;
 use Keboola\ElasticsearchWriter\Options\LoadOptions;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 
 class LoadTest extends AbstractTest
 {
@@ -41,6 +43,37 @@ class LoadTest extends AbstractTest
 			$this->assertArrayHasKey('acknowledged', $response);
 			$this->assertTrue($response['acknowledged']);
 		}
+	}
+
+	public function testLogBulkErrors()
+	{
+		$writer = $this->writer;
+		$testHandler = new TestHandler();
+
+		$writer->enableLogger((new Logger($this->index))->setHandlers([$testHandler]));
+
+		$options = new LoadOptions();
+		$options->setIndex($this->index)
+			->setType('language-invalid')
+			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
+
+		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
+		$result = $writer->loadFile($csv1, $options, 'id');
+
+		$this->assertFalse($result);
+
+		$errorsCount = 0;
+		foreach ($testHandler->getRecords() as $record) {
+			if ($record['level'] === 400){
+				$errorsCount++;
+
+				$this->assertContains('ES error', $record['message']);
+				$this->assertRegExp("/document ID \'[\d]+\'/", $record['message']);
+				$this->assertContains('iso.dot.name', $record['message']);
+			}
+		}
+
+		$this->assertEquals($this->countTable($csv1), $errorsCount);
 	}
 
 	/**
