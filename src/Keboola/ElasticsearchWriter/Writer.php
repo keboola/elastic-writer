@@ -114,23 +114,14 @@ class Writer
 				if ($responses['errors'] !== false) {
 					if (!empty($responses['items'])) {
 						foreach ($responses['items'] as $itemResult) {
-							if (!empty($itemResult['index']['error'])) {
-								if (is_array($itemResult['index']['error'])) {
-									$this->logger->error(sprintf(
-										"ES error: %s",
-										$this->getErrorMessageFromErrorField($itemResult['index']['error'])
-									));
-								} else {
-									$this->logger->error(sprintf("ES error: %s", $itemResult['index']['error'] ));
-								}
-								return false;
+							$operation = key($itemResult);
+
+							if ($itemResult[$operation]['status'] >= 400) {
+								$this->logItemError($itemResult[$operation]);
 							}
 						}
-
-						unset($responses['items']);
 					}
 
-					$this->logger->error(sprintf("ES error: %s", json_encode($responses)));
 					return false;
 				}
 				
@@ -159,23 +150,14 @@ class Writer
 			if ($responses['errors'] !== false) {
 				if (!empty($responses['items'])) {
 					foreach ($responses['items'] as $itemResult) {
-						if (!empty($itemResult['index']['error'])) {
-							if (is_array($itemResult['index']['error'])) {
-								$this->logger->error(sprintf(
-									"ES error: %s",
-									$this->getErrorMessageFromErrorField($itemResult['index']['error'])
-								));
-							} else {
-								$this->logger->error(sprintf("ES error: %s", $itemResult['index']['error'] ));
-							}
-							return false;
+						$operation = key($itemResult);
+
+						if ($itemResult[$operation]['status'] >= 400) {
+							$this->logItemError($itemResult[$operation]);
 						}
 					}
-
-					unset($responses['items']);
 				}
 
-				$this->logger->error(sprintf("ES error: %s", json_encode($responses)));
 				return false;
 			}
 
@@ -236,5 +218,24 @@ class Writer
 		}
 
 		return $return;
+	}
+
+	private function logItemError(array $item)
+	{
+		if (!empty($item['error'])) {
+			if (is_array($item['error'])) {
+				$this->logger->error(sprintf(
+					"ES error(document ID '%s'): %s",
+					$item['_id'],
+					$this->getErrorMessageFromErrorField($item['error'])
+				));
+			} else {
+				$this->logger->error(sprintf(
+					"ES error(document ID '%s'): %s",
+					$item['_id'],
+					$item['error']
+				));
+			}
+		}
 	}
 }
