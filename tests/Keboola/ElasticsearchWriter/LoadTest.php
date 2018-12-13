@@ -53,12 +53,12 @@ class LoadTest extends AbstractTest
 		$writer->enableLogger((new Logger($this->index))->setHandlers([$testHandler]));
 
 		$options = new LoadOptions();
-		$options->setIndex($this->index)
-			->setType('language-invalid')
+		$options->setIndex(strtoupper($this->index))
+			->setType('language')
 			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
 
 		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
-		$result = $writer->loadFile($csv1, $options, 'id');
+		$result = $writer->loadFile($csv1, $options);
 
 		$this->assertFalse($result);
 
@@ -66,10 +66,6 @@ class LoadTest extends AbstractTest
 		foreach ($testHandler->getRecords() as $record) {
 			if ($record['level'] === 400){
 				$errorsCount++;
-
-				$this->assertContains('ES error', $record['message']);
-				$this->assertRegExp("/document ID \'[\d]+\'/", $record['message']);
-				$this->assertContains('iso.dot.name', $record['message']);
 			}
 		}
 
