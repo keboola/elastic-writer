@@ -5,7 +5,7 @@
  */
 use Symfony\Component\Yaml\Yaml;
 use Keboola\ElasticsearchWriter\Exception;
-use Keboola\ElasticsearchWriter\Options;
+use Elasticsearch\Common\Exceptions\ElasticsearchException;
 use Keboola\ElasticsearchWriter\Validator;
 use Keboola\ElasticsearchWriter\Application;
 use Monolog\Logger;
@@ -97,15 +97,25 @@ try {
 
 	exit(1);
 } catch (\Throwable $e) {
-	$logger->critical(
-		get_class($e) . ':' . $e->getMessage(),
-		[
-			'errFile' => $e->getFile(),
-			'errLine' => $e->getLine(),
-			'errCode' => $e->getCode(),
-			'errTrace' => $e->getTraceAsString(),
-			'errPrevious' => $e->getPrevious() ? get_class($e->getPrevious()) : '',
-		]
-	);
-	exit(2);
+	if ($e instanceof ElasticsearchException) {
+		$logger->error('ES error: ' . $e->getMessage(), array());
+
+		if ($action !== 'run') {
+			echo $e->getMessage();
+		}
+
+		exit(1);
+	} else {
+		$logger->critical(
+			get_class($e) . ':' . $e->getMessage(),
+			[
+				'errFile' => $e->getFile(),
+				'errLine' => $e->getLine(),
+				'errCode' => $e->getCode(),
+				'errTrace' => $e->getTraceAsString(),
+				'errPrevious' => $e->getPrevious() ? get_class($e->getPrevious()) : '',
+			]
+		);
+		exit(2);
+	}
 }
