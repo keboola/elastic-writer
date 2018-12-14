@@ -11,7 +11,7 @@
     }
   ],
   "require": {
-    "php": ">=5.3.3",
+    "php": ">=7.0.0",
     "keboola/csv": "~1.1.3",
     "symfony/yaml": "~2.6.3",
     "elasticsearch/elasticsearch": "^2.0",
