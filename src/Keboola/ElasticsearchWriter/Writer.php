@@ -191,7 +191,7 @@ class Writer
 	{
 		$return = array();
 
-		$stats = $this->client->indices()->stats(array('metric' => 'indices'));
+		$stats = $this->client->indices()->stats();
 		if (!empty($stats['indices'])) {
 			foreach (array_keys($stats['indices']) AS $indice) {
 				$return[] = array('id' => $indice);
