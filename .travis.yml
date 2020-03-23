@@ -13,6 +13,7 @@ before_script:
 script:
   - docker-compose run --rm -e EX_ES_HOST=elasticsearch13 -e EX_ES_HOST_PORT=9200 app-tests
   - docker-compose run --rm -e EX_ES_HOST=elasticsearch22 -e EX_ES_HOST_PORT=9200 app-tests
+  - docker-compose run --rm -e EX_ES_HOST=elasticsearch71 -e EX_ES_HOST_PORT=9200 app-tests
 
 after_success:
   - docker images
