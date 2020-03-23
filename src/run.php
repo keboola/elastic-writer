@@ -42,14 +42,18 @@ try {
 	}
 
 	if (!file_exists($arguments["data"] . "/config.yml")) {
-		throw new Exception\UserException(Exception\UserException::ERR_MISSING_CONFIG);
-	}
-
-	$config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
-	if (empty($config)) {
-		print "Could not parse config file";
-		exit(2);
-	}
+		if (!file_exists($arguments["data"] . "/config.json")) {
+            throw new Exception\UserException(Exception\UserException::ERR_MISSING_CONFIG);
+        } else {
+            $config = json_decode(file_get_contents($arguments["data"] . "/config.json"), true);
+        }
+	} else {
+        $config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
+    }
+    if (empty($config)) {
+        print "Could not parse config file";
+        exit(2);
+    }
 
 	//@FIXME move to application, refactor with symfony config mapping
 	try {
