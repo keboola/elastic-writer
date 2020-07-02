@@ -3,6 +3,7 @@
  * @package wr-elasticsearch
  * @author Erik Zigo <erik.zigo@keboola.com>
  */
+
 namespace Keboola\ElasticsearchWriter;
 
 use Elasticsearch;
@@ -75,7 +76,7 @@ class Application
 
 
 		$tunnelParams = array_intersect_key($sshConfig, array_flip([
-			'user', 'sshHost', 'sshPort', 'localPort', 'remoteHost', 'remotePort', 'privateKey'
+			'user', 'sshHost', 'sshPort', 'localPort', 'remoteHost', 'remotePort', 'privateKey',
 		]));
 
 		$this->logger->info("Creating SSH tunnel to '" . $tunnelParams['sshHost'] . "'");
@@ -114,7 +115,7 @@ class Application
 		$skipped = 0;
 		$processed = 0;
 
-		foreach ($parameters['tables'] AS $table) {
+		foreach ($parameters['tables'] as $table) {
 			$sourceType = !empty($table['tableId']) ? 'table' : 'file';
 
 			if ($sourceType == 'table') {
@@ -158,13 +159,14 @@ class Application
 				throw new Exception\UserException($logPrefix . 'Export failed. Missing csv file');
 			}
 
-			$result = $this->writer->loadFile($file, $options, $idColumn);
-			if (!$result) {
-				throw new Exception\UserException($logPrefix . 'Export failed');
-			} else {
-				$this->logger->info($logPrefix . 'Export finished', array());
+			try {
+				$this->writer->loadFile($file, $options, $idColumn);
+			} catch (UserException $e) {
+				// Add prefix to erro message
+				throw new UserException($logPrefix . $e->getMessage(), 0, $e);
 			}
 
+			$this->logger->info($logPrefix . 'Export finished', []);
 			$processed++;
 		}
 
@@ -175,7 +177,7 @@ class Application
 	{
 		$return = ['indices' => []];
 
-		foreach ($this->writer->listIndices() AS $indice) {
+		foreach ($this->writer->listIndices() as $indice) {
 			$return['indices'][] = [
 				'id' => $indice['id'],
 				'mappings' => $this->writer->listIndiceMappings($indice['id']),

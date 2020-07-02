@@ -1,18 +1,17 @@
 <?php
-/**
- * @package wr-elasticsearch
- * @author Erik Zigo <erik.zigo@keboola.com>
- */
+
 namespace Keboola\ElasticsearchWriter;
 
-use Elasticsearch;
-use Keboola\Csv\CsvFile;
+use Generator;
+use Iterator;
 use Keboola\ElasticsearchWriter\Exception\UserException;
-use Keboola\ElasticsearchWriter\Options\LoadOptions;
-use Keboola\SSHTunnel\SSH;
-use phpDocumentor\Reflection\Types\Void_;
+use NoRewindIterator;
+use LimitIterator;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Elasticsearch;
+use Keboola\Csv\CsvFile;
+use Keboola\ElasticsearchWriter\Options\LoadOptions;
 
 class Writer
 {
@@ -29,7 +28,7 @@ class Writer
 	public function __construct($host)
 	{
 		$builder = Elasticsearch\ClientBuilder::create();
-		$builder->setHosts(array($host));
+		$builder->setHosts([$host]);
 		$this->client = $builder->build();
 
 		$this->logger = new NullLogger();
@@ -48,106 +47,91 @@ class Writer
 		return $this->client;
 	}
 
-	/**
-	 * @param CsvFile $file
-	 * @param LoadOptions $options
-	 * @param $primaryIndex
-	 * @return bool
-	 */
 	public function loadFile(CsvFile $file, LoadOptions $options, $primaryIndex = null)
 	{
-		$csvHeader = $file->getHeader();
+		$header = $file->getHeader();
 
-		$params = ['body' => []];
-
-		$iBulk = 1;
-		foreach ($file AS $i => $line) {
-			// skip header
-			if (!$i) {
-				continue;
-			}
-
-			$lineData = array_combine($csvHeader, $line);
-
-			if ($primaryIndex) {
-				if (!array_key_exists($primaryIndex, $lineData)) {
-					$this->logger->error(sprintf("CSV error: Missing id column %s on line %s", $primaryIndex, $i + 1));
-					return false;
-				}
-
-				$params['body'][] = [
-					'index' => [
-						'_index' => $options->getIndex(),
-						'_type' => $options->getType(),
-						'_id' => $lineData[$primaryIndex]
-					]
-				];
-			} else {
-				$params['body'][] = [
-					'index' => [
-						'_index' => $options->getIndex(),
-						'_type' => $options->getType(),
-					]
-				];
-			}
-
-			$params['body'][] = $lineData;
-
-			if ($i % $options->getBulkSize() == 0) {
-                if ($this->sendBulkRequest($options, $iBulk, $params) === false) {
-                    return false;
-                }
-                $params = ['body' => []];
-				$iBulk++;
-			}
+		$iterator = new NoRewindIterator($file);
+		$iterator->next(); // skip header
+		$bulkIndex = 1;
+		while ($iterator->valid()) {
+			$bulk = new LimitIterator($iterator, 0, $options->getBulkSize());
+			$body = iterator_to_array($this->mapRowsToRequestBody($options, $header, $primaryIndex, $bulk));
+			$this->sendBulkRequest($options, $bulkIndex, $body);
+			$bulkIndex++;
 		}
-
-		// Write last bulk
-		if (!empty($params['body'])) {
-            if ($this->sendBulkRequest($options, $iBulk, $params) === false) {
-                return false;
-            }
-		}
-
-		return true;
 	}
 
-	private function sendBulkRequest(LoadOptions $options, int $iBulk, array $params): bool
-    {
-        $this->logger->info(sprintf(
-            "Write %s batch %d to %s start",
-            $options->getType(),
-            $iBulk,
-            $options->getIndex()
-        ));
+	private function mapRowsToRequestBody(LoadOptions $options, array $header, $primaryIndex, Iterator $rows): Generator
+	{
+		foreach ($rows as $line => $values) {
+			$row = $this->mapRowTypes($header, $values);
+			if ($primaryIndex) {
+				if (!array_key_exists($primaryIndex, $row)) {
+					throw new UserException(
+						sprintf("CSV error: Missing id column %s on line %s", $primaryIndex, $line + 1)
+					);
+				}
 
-        // https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html
-        $responses = $this->client->bulk($params);
+				yield [
+					'index' => [
+						'_index' => $options->getIndex(),
+						'_type' => $options->getType(),
+						'_id' => $row[$primaryIndex],
+					],
+				];
+			} else {
+				yield [
+					'index' => [
+						'_index' => $options->getIndex(),
+						'_type' => $options->getType(),
+					],
+				];
+			}
 
-        $this->logger->info(sprintf(
-            "Write %s batch %d to %s took %d ms",
-            $options->getType(),
-            $iBulk,
-            $options->getIndex(),
-            $responses['took']
-        ));
 
-        if ($responses['errors'] !== false) {
-            if (!empty($responses['items'])) {
-                foreach ($responses['items'] as $itemResult) {
-                    $operation = key($itemResult);
+			yield $row;
+		}
+	}
 
-                    if ($itemResult[$operation]['status'] >= 400) {
-                        $this->logItemError($itemResult[$operation]);
-                    }
-                }
-            }
+	private function mapRowTypes(array &$header, array &$values): array
+	{
+		return array_combine($header, $values);
+	}
 
-            return false;
-        }
+	private function sendBulkRequest(LoadOptions $options, int $bulkIndex, array $body)
+	{
+		$this->logger->info(sprintf(
+			"Write %s batch %d to %s start",
+			$options->getType(),
+			$bulkIndex,
+			$options->getIndex()
+		));
 
-        return true;
-    }
+		// https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html
+		$responses = $this->client->bulk(['body' => $body]);
+		$this->logger->info(sprintf(
+			"Write %s batch %d to %s took %d ms",
+			$options->getType(),
+			$bulkIndex,
+			$options->getIndex(),
+			$responses['took']
+		));
+
+		if ($responses['errors'] !== false) {
+			if (!empty($responses['items'])) {
+				foreach ($responses['items'] as $itemResult) {
+					$operation = key($itemResult);
+
+					if ($itemResult[$operation]['status'] >= 400) {
+						$this->logItemError($itemResult[$operation]);
+					}
+				}
+			}
+
+			throw new UserException('Export failed.');
+		}
+	}
 
 	/**
 	 * Creates error message string from error field
@@ -171,12 +155,12 @@ class Writer
 	 */
 	public function listIndices()
 	{
-		$return = array();
+		$return = [];
 
 		$stats = $this->client->indices()->stats();
 		if (!empty($stats['indices'])) {
-			foreach (array_keys($stats['indices']) AS $indice) {
-				$return[] = array('id' => $indice);
+			foreach (array_keys($stats['indices']) as $indice) {
+				$return[] = ['id' => $indice];
 			}
 		}
 
@@ -189,13 +173,13 @@ class Writer
 	 */
 	public function listIndiceMappings($indice)
 	{
-		$return = array();
+		$return = [];
 
-		$stats = $this->client->indices()->getMapping(array('index' => $indice));
+		$stats = $this->client->indices()->getMapping(['index' => $indice]);
 
 		if (!empty($stats[$indice]) && !empty($stats[$indice]['mappings'])) {
-			foreach (array_keys($stats[$indice]['mappings']) AS $mapping) {
-				$return[] = array('id' => $mapping);
+			foreach (array_keys($stats[$indice]['mappings']) as $mapping) {
+				$return[] = ['id' => $mapping];
 			}
 		}
 
