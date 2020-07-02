@@ -1,7 +1,6 @@
 version: "2"
 
 services:
-
   app:
     build: .
     image: keboola/elastic-writer
@@ -14,6 +13,9 @@ services:
       - elasticsearch22
       - elasticsearch71
       - sshproxy
+    environment:
+      - EX_ES_HOST
+      - EX_ES_HOST_PORT
     entrypoint: bash
 
   app-tests:
@@ -27,6 +29,9 @@ services:
       - elasticsearch22
       - elasticsearch71
       - sshproxy
+    environment:
+      - EX_ES_HOST
+      - EX_ES_HOST_PORT
 
   elasticsearch13:
     image: elasticsearch:1.3

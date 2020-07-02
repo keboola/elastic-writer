@@ -10,6 +10,7 @@ use Keboola\Csv\CsvFile;
 use Keboola\ElasticsearchWriter\Exception\UserException;
 use Keboola\ElasticsearchWriter\Options\LoadOptions;
 use Keboola\SSHTunnel\SSH;
+use phpDocumentor\Reflection\Types\Void_;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -93,79 +94,60 @@ class Writer
 			$params['body'][] = $lineData;
 
 			if ($i % $options->getBulkSize() == 0) {
-				$this->logger->info(sprintf(
-					"Write %s batch %d to %s start",
-					$options->getType(),
-					$iBulk,
-					$options->getIndex()
-				));
-				$responses = $this->client->bulk($params);
-
-				$this->logger->info(sprintf(
-					"Write %s batch %d to %s took %d ms",
-					$options->getType(),
-					$iBulk,
-					$options->getIndex(),
-					$responses['took']
-				));
-
-				$params = ['body' => []];
-
-				if ($responses['errors'] !== false) {
-					if (!empty($responses['items'])) {
-						foreach ($responses['items'] as $itemResult) {
-							$operation = key($itemResult);
-
-							if ($itemResult[$operation]['status'] >= 400) {
-								$this->logItemError($itemResult[$operation]);
-							}
-						}
-					}
-
-					return false;
-				}
-				
+                if ($this->sendBulkRequest($options, $iBulk, $params) === false) {
+                    return false;
+                }
+                $params = ['body' => []];
 				$iBulk++;
-				unset($responses);
 			}
 		}
 
+		// Write last bulk
 		if (!empty($params['body'])) {
-			$this->logger->info(sprintf(
-				"Write %s batch %d to %s start",
-				$options->getType(),
-				$iBulk,
-				$options->getIndex()
-			));
-			$responses = $this->client->bulk($params);
-
-			$this->logger->info(sprintf(
-				"Write %s batch %d to %s took %d ms",
-				$options->getType(),
-				$iBulk,
-				$options->getIndex(),
-				$responses['took']
-			));
-
-			if ($responses['errors'] !== false) {
-				if (!empty($responses['items'])) {
-					foreach ($responses['items'] as $itemResult) {
-						$operation = key($itemResult);
-
-						if ($itemResult[$operation]['status'] >= 400) {
-							$this->logItemError($itemResult[$operation]);
-						}
-					}
-				}
-
-				return false;
-			}
-
-			unset($responses);
+            if ($this->sendBulkRequest($options, $iBulk, $params) === false) {
+                return false;
+            }
 		}
 
 		return true;
 	}
+
+	private function sendBulkRequest(LoadOptions $options, int $iBulk, array $params): bool
+    {
+        $this->logger->info(sprintf(
+            "Write %s batch %d to %s start",
+            $options->getType(),
+            $iBulk,
+            $options->getIndex()
+        ));
+
+        // https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html
+        $responses = $this->client->bulk($params);
+
+        $this->logger->info(sprintf(
+            "Write %s batch %d to %s took %d ms",
+            $options->getType(),
+            $iBulk,
+            $options->getIndex(),
+            $responses['took']
+        ));
+
+        if ($responses['errors'] !== false) {
+            if (!empty($responses['items'])) {
+                foreach ($responses['items'] as $itemResult) {
+                    $operation = key($itemResult);
+
+                    if ($itemResult[$operation]['status'] >= 400) {
+                        $this->logItemError($itemResult[$operation]);
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        return true;
+    }
 
 	/**
 	 * Creates error message string from error field
