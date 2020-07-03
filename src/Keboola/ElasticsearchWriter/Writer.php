@@ -8,29 +8,29 @@ namespace Keboola\ElasticsearchWriter;
 use Elasticsearch;
 use Keboola\Csv\CsvFile;
 use Keboola\ElasticsearchWriter\Exception\UserException;
+use Keboola\ElasticsearchWriter\Mapping\ColumnsMapper;
 use Keboola\ElasticsearchWriter\Options\LoadOptions;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 class Writer
 {
-	/**
-	 * @var Elasticsearch\Client
-	 */
+	/** @var Elasticsearch\Client */
 	private $client;
 
-	/**
-	 * @var LoggerInterface
-	 */
+	/** @var LoggerInterface */
 	private $logger;
+
+	/** @var ColumnsMapper */
+	private $columnsMapper;
 
 	public function __construct($host)
 	{
 		$builder = Elasticsearch\ClientBuilder::create();
 		$builder->setHosts(array($host));
 		$this->client = $builder->build();
-
 		$this->logger = new NullLogger();
+		$this->columnsMapper = new ColumnsMapper([]);
 	}
 
 	public function enableLogger(LoggerInterface $logger)
@@ -63,7 +63,7 @@ class Writer
 				continue;
 			}
 
-			$lineData = array_combine($csvHeader, $values);
+			$lineData = iterator_to_array($this->columnsMapper->mapCsvRow($csvHeader, $values));
 
 			if ($primaryIndex) {
 				if (!array_key_exists($primaryIndex, $lineData)) {
