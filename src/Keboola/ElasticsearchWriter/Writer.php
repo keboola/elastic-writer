@@ -7,9 +7,7 @@ namespace Keboola\ElasticsearchWriter;
 
 use Elasticsearch;
 use Keboola\Csv\CsvFile;
-use Keboola\ElasticsearchWriter\Exception\UserException;
 use Keboola\ElasticsearchWriter\Options\LoadOptions;
-use Keboola\SSHTunnel\SSH;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -56,10 +54,8 @@ class Writer
 	public function loadFile(CsvFile $file, LoadOptions $options, $primaryIndex = null)
 	{
 		$csvHeader = $file->getHeader();
-
-		$params = ['body' => []];
-
-		$iBulk = 1;
+		$body = [];
+		$bulkIndex = 1;
 		foreach ($file AS $i => $line) {
 			// skip header
 			if (!$i) {
@@ -74,7 +70,7 @@ class Writer
 					return false;
 				}
 
-				$params['body'][] = [
+				$body[] = [
 					'index' => [
 						'_index' => $options->getIndex(),
 						'_type' => $options->getType(),
@@ -82,7 +78,7 @@ class Writer
 					]
 				];
 			} else {
-				$params['body'][] = [
+				$body[] = [
 					'index' => [
 						'_index' => $options->getIndex(),
 						'_type' => $options->getType(),
@@ -90,83 +86,61 @@ class Writer
 				];
 			}
 
-			$params['body'][] = $lineData;
+			$body[] = $lineData;
 
 			if ($i % $options->getBulkSize() == 0) {
-				$this->logger->info(sprintf(
-					"Write %s batch %d to %s start",
-					$options->getType(),
-					$iBulk,
-					$options->getIndex()
-				));
-				$responses = $this->client->bulk($params);
-
-				$this->logger->info(sprintf(
-					"Write %s batch %d to %s took %d ms",
-					$options->getType(),
-					$iBulk,
-					$options->getIndex(),
-					$responses['took']
-				));
-
-				$params = ['body' => []];
-
-				if ($responses['errors'] !== false) {
-					if (!empty($responses['items'])) {
-						foreach ($responses['items'] as $itemResult) {
-							$operation = key($itemResult);
-
-							if ($itemResult[$operation]['status'] >= 400) {
-								$this->logItemError($itemResult[$operation]);
-							}
-						}
-					}
-
+				if ($this->sendBulkRequest($body, $bulkIndex, $options) === false) {
 					return false;
 				}
-				
-				$iBulk++;
-				unset($responses);
+				$body = [];
+				$bulkIndex++;
 			}
 		}
 
-		if (!empty($params['body'])) {
-			$this->logger->info(sprintf(
-				"Write %s batch %d to %s start",
-				$options->getType(),
-				$iBulk,
-				$options->getIndex()
-			));
-			$responses = $this->client->bulk($params);
-
-			$this->logger->info(sprintf(
-				"Write %s batch %d to %s took %d ms",
-				$options->getType(),
-				$iBulk,
-				$options->getIndex(),
-				$responses['took']
-			));
-
-			if ($responses['errors'] !== false) {
-				if (!empty($responses['items'])) {
-					foreach ($responses['items'] as $itemResult) {
-						$operation = key($itemResult);
-
-						if ($itemResult[$operation]['status'] >= 400) {
-							$this->logItemError($itemResult[$operation]);
-						}
-					}
-				}
-
+		if (!empty($body)) {
+			if ($this->sendBulkRequest($body, $bulkIndex, $options) === false) {
 				return false;
 			}
-
-			unset($responses);
 		}
 
 		return true;
 	}
 
+	private function sendBulkRequest(array $body, int $bulkIndex, LoadOptions $options): bool
+	{
+		$this->logger->info(sprintf(
+			"Write %s batch %d to %s start",
+			$options->getType(),
+			$bulkIndex,
+			$options->getIndex()
+		));
+		$responses = $this->client->bulk(['body' => $body]);
+
+		$this->logger->info(sprintf(
+			"Write %s batch %d to %s took %d ms",
+			$options->getType(),
+			$bulkIndex,
+			$options->getIndex(),
+			$responses['took']
+		));
+
+		if ($responses['errors'] !== false) {
+			if (!empty($responses['items'])) {
+				foreach ($responses['items'] as $itemResult) {
+					$operation = key($itemResult);
+
+					if ($itemResult[$operation]['status'] >= 400) {
+						$this->logItemError($itemResult[$operation]);
+					}
+				}
+			}
+
+			return false;
+		}
+
+		return true;
+	}
+	
 	/**
 	 * Creates error message string from error field
 	 * @param array $error
