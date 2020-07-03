@@ -5,6 +5,10 @@
  */
 namespace Keboola\ElasticsearchWriter;
 
+use NoRewindIterator;
+use Iterator;
+use LimitIterator;
+use Generator;
 use Elasticsearch;
 use Keboola\Csv\CsvFile;
 use Keboola\ElasticsearchWriter\Exception\UserException;
@@ -55,50 +59,47 @@ class Writer
 	public function loadFile(CsvFile $file, LoadOptions $options, $primaryIndex = null)
 	{
 		$csvHeader = $file->getHeader();
-		$body = [];
+
+		$iterator = new NoRewindIterator($file);
+		$iterator->next(); // skip header
 		$bulkIndex = 1;
-		foreach ($file AS $line => $values) {
-			// skip header
-			if (!$line) {
-				continue;
-			}
+		while ($iterator->valid()) {
+			$bulk = new LimitIterator($iterator, 0, $options->getBulkSize());
+			$body = iterator_to_array($this->mapRowsToRequestBody($options, $csvHeader, $primaryIndex, $bulk));
+			$this->sendBulkRequest($body, $bulkIndex, $options);
+			$bulkIndex++;
+		}
+	}
 
-			$lineData = iterator_to_array($this->columnsMapper->mapCsvRow($csvHeader, $values));
-
+	private function mapRowsToRequestBody(LoadOptions $options, array $csvHeader, $primaryIndex, Iterator $rows): Generator
+	{
+		foreach ($rows as $line => $values) {
+			$row = iterator_to_array($this->columnsMapper->mapCsvRow($csvHeader, $values));
 			if ($primaryIndex) {
-				if (!array_key_exists($primaryIndex, $lineData)) {
+				if (!array_key_exists($primaryIndex, $row)) {
 					throw new UserException(
 						sprintf('CSV error: Missing id column "%s" on line "%s".', $primaryIndex, $line + 1)
 					);
 				}
 
-				$body[] = [
+				yield [
 					'index' => [
 						'_index' => $options->getIndex(),
 						'_type' => $options->getType(),
-						'_id' => $lineData[$primaryIndex]
-					]
+						'_id' => $row[$primaryIndex],
+					],
 				];
 			} else {
-				$body[] = [
+				yield [
 					'index' => [
 						'_index' => $options->getIndex(),
 						'_type' => $options->getType(),
-					]
+					],
 				];
 			}
 
-			$body[] = $lineData;
 
-			if ($line % $options->getBulkSize() == 0) {
-				$this->sendBulkRequest($body, $bulkIndex, $options);
-				$body = [];
-				$bulkIndex++;
-			}
-		}
-
-		if (!empty($body)) {
-			$this->sendBulkRequest($body, $bulkIndex, $options);
+			yield $row;
 		}
 	}
 
