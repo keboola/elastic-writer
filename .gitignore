@@ -3,3 +3,5 @@ vendor/
 .idea/
 composer.phar
 tests/data/run/
+/.env
+/ssh.*
