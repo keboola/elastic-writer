@@ -15,6 +15,9 @@ services:
       - elasticsearch71
       - sshproxy
     entrypoint: bash
+    environment:
+      - EX_ES_HOST
+      - EX_ES_HOST_PORT
 
   app-tests:
     image: keboola/elastic-writer
@@ -27,6 +30,9 @@ services:
       - elasticsearch22
       - elasticsearch71
       - sshproxy
+    environment:
+      - EX_ES_HOST
+      - EX_ES_HOST_PORT
 
   elasticsearch13:
     image: elasticsearch:1.3
