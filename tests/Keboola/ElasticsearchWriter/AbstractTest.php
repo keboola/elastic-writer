@@ -7,9 +7,19 @@ namespace Keboola\ElasticsearchWriter;
 
 use Elasticsearch;
 use Keboola\Csv\CsvFile;
+use Symfony\Component\Process\Process;
 
 abstract class AbstractTest extends \PHPUnit_Framework_TestCase
 {
+	protected function tearDown()
+	{
+		parent::tearDown();
+
+		# Close SSH tunnel if created
+		$process = new Process(['sh', '-c', 'pgrep ssh | xargs -r kill']);
+		$process->mustRun();
+	}
+
 	/**
 	 * Count records in CSV (with headers)
 	 *

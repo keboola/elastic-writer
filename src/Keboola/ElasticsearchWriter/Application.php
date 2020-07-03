@@ -158,12 +158,14 @@ class Application
 				throw new Exception\UserException($logPrefix . 'Export failed. Missing csv file');
 			}
 
-			$result = $this->writer->loadFile($file, $options, $idColumn);
-			if (!$result) {
-				throw new Exception\UserException($logPrefix . 'Export failed');
-			} else {
-				$this->logger->info($logPrefix . 'Export finished', array());
+
+			try {
+				$this->writer->loadFile($file, $options, $idColumn);
+			} catch (UserException $e) {
+				// Add prefix to message
+				throw new UserException($logPrefix . $e->getMessage());
 			}
+			$this->logger->info($logPrefix . 'Export finished', array());
 
 			$processed++;
 		}

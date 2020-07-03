@@ -9,7 +9,6 @@ use Elasticsearch;
 use Keboola\Csv\CsvFile;
 use Keboola\ElasticsearchWriter\Exception\UserException;
 use Keboola\ElasticsearchWriter\Options\LoadOptions;
-use Keboola\SSHTunnel\SSH;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -51,30 +50,29 @@ class Writer
 	 * @param CsvFile $file
 	 * @param LoadOptions $options
 	 * @param $primaryIndex
-	 * @return bool
+	 * @return void
 	 */
 	public function loadFile(CsvFile $file, LoadOptions $options, $primaryIndex = null)
 	{
 		$csvHeader = $file->getHeader();
-
-		$params = ['body' => []];
-
-		$iBulk = 1;
-		foreach ($file AS $i => $line) {
+		$body = [];
+		$bulkIndex = 1;
+		foreach ($file AS $line => $values) {
 			// skip header
-			if (!$i) {
+			if (!$line) {
 				continue;
 			}
 
-			$lineData = array_combine($csvHeader, $line);
+			$lineData = array_combine($csvHeader, $values);
 
 			if ($primaryIndex) {
 				if (!array_key_exists($primaryIndex, $lineData)) {
-					$this->logger->error(sprintf("CSV error: Missing id column %s on line %s", $primaryIndex, $i + 1));
-					return false;
+					throw new UserException(
+						sprintf('CSV error: Missing id column "%s" on line "%s".', $primaryIndex, $line + 1)
+					);
 				}
 
-				$params['body'][] = [
+				$body[] = [
 					'index' => [
 						'_index' => $options->getIndex(),
 						'_type' => $options->getType(),
@@ -82,7 +80,7 @@ class Writer
 					]
 				];
 			} else {
-				$params['body'][] = [
+				$body[] = [
 					'index' => [
 						'_index' => $options->getIndex(),
 						'_type' => $options->getType(),
@@ -90,81 +88,51 @@ class Writer
 				];
 			}
 
-			$params['body'][] = $lineData;
+			$body[] = $lineData;
 
-			if ($i % $options->getBulkSize() == 0) {
-				$this->logger->info(sprintf(
-					"Write %s batch %d to %s start",
-					$options->getType(),
-					$iBulk,
-					$options->getIndex()
-				));
-				$responses = $this->client->bulk($params);
-
-				$this->logger->info(sprintf(
-					"Write %s batch %d to %s took %d ms",
-					$options->getType(),
-					$iBulk,
-					$options->getIndex(),
-					$responses['took']
-				));
-
-				$params = ['body' => []];
-
-				if ($responses['errors'] !== false) {
-					if (!empty($responses['items'])) {
-						foreach ($responses['items'] as $itemResult) {
-							$operation = key($itemResult);
-
-							if ($itemResult[$operation]['status'] >= 400) {
-								$this->logItemError($itemResult[$operation]);
-							}
-						}
-					}
-
-					return false;
-				}
-				
-				$iBulk++;
-				unset($responses);
+			if ($line % $options->getBulkSize() == 0) {
+				$this->sendBulkRequest($body, $bulkIndex, $options);
+				$body = [];
+				$bulkIndex++;
 			}
 		}
 
-		if (!empty($params['body'])) {
-			$this->logger->info(sprintf(
-				"Write %s batch %d to %s start",
-				$options->getType(),
-				$iBulk,
-				$options->getIndex()
-			));
-			$responses = $this->client->bulk($params);
+		if (!empty($body)) {
+			$this->sendBulkRequest($body, $bulkIndex, $options);
+		}
+	}
 
-			$this->logger->info(sprintf(
-				"Write %s batch %d to %s took %d ms",
-				$options->getType(),
-				$iBulk,
-				$options->getIndex(),
-				$responses['took']
-			));
+	private function sendBulkRequest(array $body, int $bulkIndex, LoadOptions $options)
+	{
+		$this->logger->info(sprintf(
+			"Write %s batch %d to %s start",
+			$options->getType(),
+			$bulkIndex,
+			$options->getIndex()
+		));
+		$responses = $this->client->bulk(['body' => $body]);
 
-			if ($responses['errors'] !== false) {
-				if (!empty($responses['items'])) {
-					foreach ($responses['items'] as $itemResult) {
-						$operation = key($itemResult);
+		$this->logger->info(sprintf(
+			"Write %s batch %d to %s took %d ms",
+			$options->getType(),
+			$bulkIndex,
+			$options->getIndex(),
+			$responses['took']
+		));
 
-						if ($itemResult[$operation]['status'] >= 400) {
-							$this->logItemError($itemResult[$operation]);
-						}
+		if ($responses['errors'] !== false) {
+			if (!empty($responses['items'])) {
+				foreach ($responses['items'] as $itemResult) {
+					$operation = key($itemResult);
+
+					if ($itemResult[$operation]['status'] >= 400) {
+						$this->logItemError($itemResult[$operation]);
 					}
 				}
-
-				return false;
 			}
 
-			unset($responses);
+			throw new UserException('Export failed.');
 		}
-
-		return true;
 	}
 
 	/**

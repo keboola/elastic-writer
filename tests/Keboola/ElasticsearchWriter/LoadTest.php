@@ -7,6 +7,7 @@ namespace Keboola\ElasticsearchWriter;
 
 use Elasticsearch;
 use Keboola\Csv\CsvFile;
+use Keboola\ElasticsearchWriter\Exception\UserException;
 use Keboola\ElasticsearchWriter\Options\LoadOptions;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
@@ -58,9 +59,13 @@ class LoadTest extends AbstractTest
 			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
 
 		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
-		$result = $writer->loadFile($csv1, $options);
 
-		$this->assertFalse($result);
+		try {
+			$writer->loadFile($csv1, $options);
+			$this->fail('Exception expected.');
+		} catch (UserException $e) {
+			$this->assertSame('Export failed.', $e->getMessage());
+		}
 
 		$errorsCount = 0;
 		foreach ($testHandler->getRecords() as $record) {
@@ -85,14 +90,10 @@ class LoadTest extends AbstractTest
 			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
 
 		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
-		$result = $writer->loadFile($csv1, $options, 'id');
-
-		$this->assertTrue($result);
+		$writer->loadFile($csv1, $options, 'id');
 
 		$csv2 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'-update.csv');
-		$result = $writer->loadFile($csv2, $options, 'id');
-
-		$this->assertTrue($result);
+		$writer->loadFile($csv2, $options, 'id');
 
 		// test if index exists
 		$params = ['index' => $options->getIndex()];
@@ -129,9 +130,10 @@ class LoadTest extends AbstractTest
 			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
 
 		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
-		$result = $writer->loadFile($csv1, $options, 'fakeId');
 
-		$this->assertFalse($result);
+		$this->expectException(UserException::class);
+		$this->expectExceptionMessage('CSV error: Missing id column "fakeId" on line "2".');
+		$writer->loadFile($csv1, $options, 'fakeId');
 	}
 
 	/**
@@ -147,13 +149,8 @@ class LoadTest extends AbstractTest
 			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
 
 		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
-		$result = $writer->loadFile($csv1, $options, 'id');
-
-		$this->assertTrue($result);
-
-		$result = $writer->loadFile($csv1, $options, 'id');
-
-		$this->assertTrue($result);
+		$writer->loadFile($csv1, $options, 'id');
+		$writer->loadFile($csv1, $options, 'id');
 
 		// test if index exists
 		$params = ['index' => $options->getIndex()];
@@ -190,13 +187,8 @@ class LoadTest extends AbstractTest
 			->setBulkSize(LoadOptions::DEFAULT_BULK_SIZE);
 
 		$csv1 = new CsvFile(__DIR__ .'/../../data/csv/' . $options->getType() .'.csv');
-		$result = $writer->loadFile($csv1, $options, null);
-
-		$this->assertTrue($result);
-
-		$result = $writer->loadFile($csv1, $options, null);
-
-		$this->assertTrue($result);
+		$writer->loadFile($csv1, $options, null);
+		$writer->loadFile($csv1, $options, null);
 
 		// test if index exists
 		$params = ['index' => $options->getIndex()];
