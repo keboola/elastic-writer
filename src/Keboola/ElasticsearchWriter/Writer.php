@@ -7,6 +7,7 @@ namespace Keboola\ElasticsearchWriter;
 
 use Elasticsearch;
 use Keboola\Csv\CsvFile;
+use Keboola\ElasticsearchWriter\Exception\UserException;
 use Keboola\ElasticsearchWriter\Options\LoadOptions;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -49,25 +50,26 @@ class Writer
 	 * @param CsvFile $file
 	 * @param LoadOptions $options
 	 * @param $primaryIndex
-	 * @return bool
+	 * @return void
 	 */
 	public function loadFile(CsvFile $file, LoadOptions $options, $primaryIndex = null)
 	{
 		$csvHeader = $file->getHeader();
 		$body = [];
 		$bulkIndex = 1;
-		foreach ($file AS $i => $line) {
+		foreach ($file AS $line => $values) {
 			// skip header
-			if (!$i) {
+			if (!$line) {
 				continue;
 			}
 
-			$lineData = array_combine($csvHeader, $line);
+			$lineData = array_combine($csvHeader, $values);
 
 			if ($primaryIndex) {
 				if (!array_key_exists($primaryIndex, $lineData)) {
-					$this->logger->error(sprintf("CSV error: Missing id column %s on line %s", $primaryIndex, $i + 1));
-					return false;
+					throw new UserException(
+						sprintf('CSV error: Missing id column "%s" on line "%s".', $primaryIndex, $line + 1)
+					);
 				}
 
 				$body[] = [
@@ -88,25 +90,19 @@ class Writer
 
 			$body[] = $lineData;
 
-			if ($i % $options->getBulkSize() == 0) {
-				if ($this->sendBulkRequest($body, $bulkIndex, $options) === false) {
-					return false;
-				}
+			if ($line % $options->getBulkSize() == 0) {
+				$this->sendBulkRequest($body, $bulkIndex, $options);
 				$body = [];
 				$bulkIndex++;
 			}
 		}
 
 		if (!empty($body)) {
-			if ($this->sendBulkRequest($body, $bulkIndex, $options) === false) {
-				return false;
-			}
+			$this->sendBulkRequest($body, $bulkIndex, $options);
 		}
-
-		return true;
 	}
 
-	private function sendBulkRequest(array $body, int $bulkIndex, LoadOptions $options): bool
+	private function sendBulkRequest(array $body, int $bulkIndex, LoadOptions $options)
 	{
 		$this->logger->info(sprintf(
 			"Write %s batch %d to %s start",
@@ -135,12 +131,10 @@ class Writer
 				}
 			}
 
-			return false;
+			throw new UserException('Export failed.');
 		}
-
-		return true;
 	}
-	
+
 	/**
 	 * Creates error message string from error field
 	 * @param array $error
