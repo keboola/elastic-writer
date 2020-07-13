@@ -14,38 +14,6 @@ use Monolog\Logger;
 
 class LoadTest extends AbstractTest
 {
-	/**
-	 * @var Writer
-	 */
-	protected $writer;
-
-	protected $index = 'keboola_es_writer_test';
-
-	protected function setUp()
-	{
-		$this->writer = new Writer(sprintf('%s:%s', getenv('EX_ES_HOST'), getenv('EX_ES_HOST_PORT')));
-
-		$this->cleanUp();
-	}
-
-	/**
-	 * Cleanup test workspace
-	 *
-	 * @throws Elasticsearch\Common\Exceptions\Missing404Exception
-	 * @throws \Exception
-	 */
-	protected function cleanUp()
-	{
-		$params = ['index' => $this->index];
-
-		if ($this->writer->getClient()->indices()->exists($params)) {
-			$response = $this->writer->getClient()->indices()->delete($params);
-
-			$this->assertArrayHasKey('acknowledged', $response);
-			$this->assertTrue($response['acknowledged']);
-		}
-	}
-
 	public function testLogBulkErrors()
 	{
 		$writer = $this->writer;

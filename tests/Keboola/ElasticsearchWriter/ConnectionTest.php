@@ -16,6 +16,7 @@ class ConnectionTest extends AbstractTest
 
 	protected function setUp()
 	{
+		parent::setUp();
 		$builder = Elasticsearch\ClientBuilder::create();
 		$builder->setHosts(array(sprintf('%s:%s', getenv('EX_ES_HOST'), getenv('EX_ES_HOST_PORT'))));
 		$this->client = $builder->build();

@@ -1,0 +1,4 @@
+"long","int-nullable","double","float-nullable","ignored","bool","bool-nullable","string","string-nullable","text-nullable","missing-in-config"
+"1","2","1.0","20.0","abc","1","0","def","xyz","xyz","xyz"
+"2","","","","","","","","","",""
+"3","4","100.0","200.0","abc1","true","false","def2","xyz3","xyz3","xyz3"
