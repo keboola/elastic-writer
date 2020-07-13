@@ -29,6 +29,11 @@ Writer expects that mapping of types and indexes in your Elasticsearch exists. I
     - `type` - type of the data, determines the type in ES,
     - `id` *(optional)* - determines in which column of table is the document's ID/primary key
     - `export` - whether this table shall be exported to ES
+- The optional`items` section defines columns mapping
+    - `name` string (required) - name of the column in CSV file
+    - `dbName` string (required) - name in the database
+    - `type` string (required) - type in the database. Special type "ignore" serves to ignore column present in CSV file.
+    - `nullable` bool (required) - is nullable?
 
 ### Example
 
@@ -76,6 +81,36 @@ Writer expects that mapping of types and indexes in your Elasticsearch exists. I
             "type": "products",
             "id": "id",
             "export": true
+        }
+    ]
+}
+```
+
+### Example with columns mapping
+```json
+{
+    "elastic": "...",
+    "tables": [
+        {
+            "file": "products.csv",
+            "index": "production",
+            "type": "products",
+            "id": "id",
+            "export": true,
+            "items": [
+                {
+                    "name": "order",
+                    "dbName": "order",
+                    "type": "integer",
+                    "nullable": false
+                },
+                {
+                    "name": "vat",
+                    "dbName": "vat-usa",
+                    "type": "double",
+                    "nullable": true
+                }
+            ]
         }
     ]
 }
