@@ -80,6 +80,43 @@ class ConfigValidator
 	 * @return bool
 	 * @throws InvalidConfigurationException
 	 */
+	private static function columnsConfigValidation(array $tables)
+	{
+		foreach ($tables as $tableIndex => $tableConfig) {
+			foreach ($tableConfig['items'] ?? [] as $columnIndex => $columnConfig) {
+				$logPrefix = sprintf('Table config %d, column %d: ', $tableIndex + 1, $columnIndex + 1);
+
+				if (empty($columnConfig['name'])) {
+					throw new InvalidConfigurationException($logPrefix . 'Missing "name" key.');
+				}
+
+				if (empty($columnConfig['dbName'])) {
+					throw new InvalidConfigurationException($logPrefix . 'Missing "dbName" key.');
+				}
+
+				if (empty($columnConfig['type'])) {
+					throw new InvalidConfigurationException($logPrefix . 'Missing "type" key.');
+				}
+
+				if (!isset($columnConfig['nullable'])) {
+					throw new InvalidConfigurationException($logPrefix . 'Missing "nullable" key.');
+				}
+
+				if (!is_bool($columnConfig['nullable'])) {
+					throw new InvalidConfigurationException($logPrefix . '"nullable" key must be boolean.');
+				}
+			}
+		}
+
+
+		return true;
+	}
+
+	/**
+	 * @param array $config
+	 * @return bool
+	 * @throws InvalidConfigurationException
+	 */
 	public static function validate(array $config)
 	{
 		if (!isset($config['parameters']) || !is_array($config['parameters'])) {
@@ -105,6 +142,8 @@ class ConfigValidator
 		if (isset($config['elastic']['ssh'])) {
 			self::sshConfigValidation($config['elastic']['ssh']);
 		}
+
+		self::columnsConfigValidation($config['tables']);
 
 		return true;
 	}

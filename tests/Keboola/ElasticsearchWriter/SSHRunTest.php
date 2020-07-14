@@ -5,42 +5,13 @@
  */
 namespace Keboola\ElasticsearchWriter;
 
-use Elasticsearch;
-use Keboola\ElasticsearchWriter\Exception\UserException;
 use Symfony\Component\Yaml\Yaml;
 
 class SSHRunTest extends AbstractTest
 {
-	/**
-	 * @var Writer
-	 */
-	protected $writer;
-
-	protected $index = 'keboola_es_writer_run_test';
-
-	protected function setUp()
-	{
-		$this->writer = new Writer(sprintf('%s:%s', getenv('EX_ES_HOST'), getenv('EX_ES_HOST_PORT')));
-
-		$this->cleanUp();
-	}
-
-	/**
-	 * Cleanup test workspace
-	 *
-	 * @throws Elasticsearch\Common\Exceptions\Missing404Exception
-	 * @throws \Exception
-	 */
 	protected function cleanUp()
 	{
-		$params = ['index' => $this->index];
-
-		if ($this->writer->getClient()->indices()->exists($params)) {
-			$response = $this->writer->getClient()->indices()->delete($params);
-
-			$this->assertArrayHasKey('acknowledged', $response);
-			$this->assertTrue($response['acknowledged']);
-		}
+		parent::cleanUp();
 
 		$configPath = './tests/data/run/config.yml';
 		if (file_exists($configPath)) {

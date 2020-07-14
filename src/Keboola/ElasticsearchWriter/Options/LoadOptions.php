@@ -5,77 +5,73 @@
  */
 namespace Keboola\ElasticsearchWriter\Options;
 
+use Keboola\ElasticsearchWriter\Mapping\ColumnsMapper;
+
 class LoadOptions
 {
 	const DEFAULT_BULK_SIZE = 10000;
 
-	/**
-	 * @var string
-	 */
+	/** @var string */
 	private $index;
 
-	/**
-	 * @var string
-	 */
+	/** @var string */
 	private $type;
 
-	/**
-	 * @var int
-	 */
+	/** @var int */
 	private $bulkSize = self::DEFAULT_BULK_SIZE;
 
-	/**
-	 * @param $value
-	 * @return $this
-	 */
-	public function setIndex($value)
+	/** @var array */
+	private $columns = [];
+
+
+	public function setIndex($value): self
 	{
 		$this->index = (string) $value;
 		return $this;
 	}
 
-	/**
-	 * @return string
-	 */
-	public function getIndex()
+	public function getIndex(): string
 	{
 		return $this->index;
 	}
 
-	/**
-	 * @param $value
-	 * @return $this
-	 */
-	public function setType($value)
+	public function setType($value): self
 	{
 		$this->type = (string) $value;
 		return $this;
 	}
 
-	/**
-	 * @return string
-	 */
-	public function getType()
+	public function getType(): string
 	{
 		return $this->type;
 	}
 
-	/**
-	 * @param $value
-	 * @return $this
-	 */
-	public function setBulkSize($value)
+	public function setBulkSize($value): self
 	{
 		$this->bulkSize = (int) $value;
 		return $this;
 	}
 
-	/**
-	 * @return int
-	 */
-	public function getBulkSize()
+	public function getBulkSize(): int
 	{
 		return $this->bulkSize;
 
+	}
+
+	public function setColumns(array $columns): self
+	{
+		$this->columns = $columns;
+		return $this;
+	}
+
+
+	public function getColumns(): array
+	{
+		return $this->columns;
+	}
+
+	public function getColumnsMapper(): ColumnsMapper
+	{
+		return new ColumnsMapper($this->getColumns());
 	}
 }

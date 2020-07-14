@@ -5,6 +5,7 @@
  */
 namespace Keboola\ElasticsearchWriter;
 
+use Keboola\ElasticsearchWriter\Mapping\ColumnsMapper;
 use NoRewindIterator;
 use Iterator;
 use LimitIterator;
@@ -12,7 +13,6 @@ use Generator;
 use Elasticsearch;
 use Keboola\Csv\CsvFile;
 use Keboola\ElasticsearchWriter\Exception\UserException;
-use Keboola\ElasticsearchWriter\Mapping\ColumnsMapper;
 use Keboola\ElasticsearchWriter\Options\LoadOptions;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -25,8 +25,14 @@ class Writer
 	/** @var LoggerInterface */
 	private $logger;
 
-	/** @var ColumnsMapper */
-	private $columnsMapper;
+	/** @var string  */
+	private $serverVersion;
+
+	/**
+	 * https://www.elastic.co/guide/en/elasticsearch/reference/current/removal-of-types.html
+	 * @var bool
+	 */
+	private $typesSupportedByServer;
 
 	public function __construct($host)
 	{
@@ -34,7 +40,8 @@ class Writer
 		$builder->setHosts(array($host));
 		$this->client = $builder->build();
 		$this->logger = new NullLogger();
-		$this->columnsMapper = new ColumnsMapper([]);
+		$this->serverVersion = $this->client->info()['version']['number'];
+		$this->typesSupportedByServer = version_compare($this->serverVersion, '7.0', '<');
 	}
 
 	public function enableLogger(LoggerInterface $logger)
@@ -60,6 +67,12 @@ class Writer
 	{
 		$csvHeader = $file->getHeader();
 
+		try {
+			$this->createIndexIfNotExists($options);
+		} catch (\Exception $e) {
+			$this->logger->warning(sprintf('Index create error: %s. Ignored.', $e->getMessage()));
+		}
+
 		$iterator = new NoRewindIterator($file);
 		$iterator->next(); // skip header
 		$bulkIndex = 1;
@@ -74,7 +87,13 @@ class Writer
 	private function mapRowsToRequestBody(LoadOptions $options, array $csvHeader, $primaryIndex, Iterator $rows): Generator
 	{
 		foreach ($rows as $line => $values) {
-			$row = iterator_to_array($this->columnsMapper->mapCsvRow($csvHeader, $values));
+			$row = iterator_to_array($options->getColumnsMapper()->mapCsvRow($csvHeader, $values));
+
+			$indexBody= [
+				'_index' => $options->getIndex(),
+				'_type' => $options->getType()
+			];
+
 			if ($primaryIndex) {
 				if (!array_key_exists($primaryIndex, $row)) {
 					throw new UserException(
@@ -82,23 +101,10 @@ class Writer
 					);
 				}
 
-				yield [
-					'index' => [
-						'_index' => $options->getIndex(),
-						'_type' => $options->getType(),
-						'_id' => $row[$primaryIndex],
-					],
-				];
-			} else {
-				yield [
-					'index' => [
-						'_index' => $options->getIndex(),
-						'_type' => $options->getType(),
-					],
-				];
+				$indexBody['_id'] = $row[$primaryIndex];
 			}
 
-
+			yield ['index' => $indexBody];
 			yield $row;
 		}
 	}
@@ -133,6 +139,36 @@ class Writer
 			}
 
 			throw new UserException('Export failed.');
+		}
+	}
+
+	private function createIndexIfNotExists(LoadOptions $options)
+	{
+		// Create index only if not exists
+		$indexExists = $this->client->indices()->exists(['index' => $options->getIndex()]);
+		if ($indexExists) {
+			return;
+		}
+
+		// Prepare properties
+		$properties = [];
+		$columns = $options->getColumnsMapper()->getAllColumns();
+		foreach ($columns as $column) {
+			// Ignore ignored columns
+			if ($column->getType() === ColumnsMapper::IGNORED_COLUMN_TYPE) {
+				continue;
+			}
+
+			$properties[$column->getDbName()] = ['type' => $column->getType()];
+		}
+
+		// Send request
+		if ($properties) {
+			$this->client->indices()->create([
+				'index' => $options->getIndex(),
+				'include_type_name' => true,
+				'body' => ['mappings' => [$options->getType() => ['properties' => $properties]]]
+			]);
 		}
 	}
 

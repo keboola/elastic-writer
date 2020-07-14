@@ -8,6 +8,7 @@ namespace Keboola\ElasticsearchWriter;
 use Elasticsearch;
 use Keboola\Csv\CsvFile;
 use Keboola\ElasticsearchWriter\Exception\UserException;
+use Keboola\ElasticsearchWriter\Mapping\ColumnsMapper;
 use Keboola\SSHTunnel\SSH;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -133,8 +134,10 @@ class Application
 
 			// load options
 			$options = new Options\LoadOptions();
-			$options->setIndex($table['index'])
-				->setType($table['type']);
+			$options
+				->setIndex($table['index'])
+				->setType($table['type'])
+				->setColumns($table['items'] ?? []);
 
 			if (!empty($parameters['elastic']['bulkSize'])) {
 				$options->setBulkSize($parameters['elastic']['bulkSize']);
