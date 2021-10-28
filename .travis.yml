@@ -10,7 +10,6 @@ before_script:
   - docker-compose -v
   - docker login --username "$DOCKERHUB_USER" --password "$DOCKERHUB_TOKEN"
   - docker-compose build
-  - docker logout
 
 script:
   - docker-compose run --rm -e EX_ES_HOST=elasticsearch13 -e EX_ES_HOST_PORT=9200 app-tests
