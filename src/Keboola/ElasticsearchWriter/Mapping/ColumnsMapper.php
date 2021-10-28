@@ -4,6 +4,7 @@ namespace Keboola\ElasticsearchWriter\Mapping;
 
 use Generator;
 use Keboola\ElasticsearchWriter\Exception\UserException;
+use Nette\Utils\Json;
 
 class ColumnsMapper
 {
@@ -12,6 +13,8 @@ class ColumnsMapper
 	const FLOAT_TYPES = ['double', 'float', 'half_float', 'scaled_float'];
 
 	const BOOLEAN_TYPES = ['boolean'];
+
+	const ARRAY_TYPES = ['array'];
 
 	const IGNORED_COLUMN_TYPE = 'ignore';
 
@@ -76,6 +79,14 @@ class ColumnsMapper
 				return false;
 			}
 			return (bool) $value;
+		}
+
+		if (in_array($type, self::ARRAY_TYPES, true)) {
+			try {
+				return Json::decode($value, Json::FORCE_ARRAY);
+			} catch (\Exception $e) {
+				throw new UserException('Could not decode value of type array. Value: ' . $value);
+			}
 		}
 
 		return $value;
