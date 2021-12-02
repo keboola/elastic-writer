@@ -85,7 +85,7 @@ class ColumnsMapper
 			try {
 				return Json::decode($value, Json::FORCE_ARRAY);
 			} catch (\Exception $e) {
-				throw new UserException('Could not decode value of type array. Value: ' . $value);
+				throw new UserException('Could not decode value of type array. Value: ' . var_export($value, true));
 			}
 		}
 
