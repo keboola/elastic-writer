@@ -204,4 +204,97 @@ class RunTest extends AbstractTest
 
 		$this->assertTrue($indiceFound);
 	}
+
+	public function testRunWithListAction()
+	{
+		$config = [
+			"parameters" => [
+				"elastic" => [
+					"host" => getenv('EX_ES_HOST'),
+					"port" => getenv('EX_ES_HOST_PORT'),
+				],
+				"tables" => [
+					[
+						"file" => "language-with-list.csv",
+						"index" => $this->index,
+						"type" => "language-with-list",
+						"id" => "id",
+						"export" => true,
+						"items" => [
+							[
+								"name" => "id",
+								"dbName" => "id",
+								"type" => "integer",
+								"nullable" => false
+							],
+							[
+								"name" => "list",
+								"dbName" => "list",
+								"type" => "array",
+								"nullable" => true
+							]
+						]
+					]
+				]
+			]
+		];
+
+		$yaml = Yaml::dump($config);
+
+		$inTablesDir = './tests/data/run/in/tables';
+		if (!is_dir($inTablesDir)) {
+			mkdir($inTablesDir, 0777, true);
+		}
+
+		file_put_contents('./tests/data/run/config.yml', $yaml);
+
+		copy('./tests/data/csv/language-with-list.csv', $inTablesDir . '/language-with-list.csv');
+
+		$lastOutput = exec('php ./src/run.php --data=./tests/data/run', $output, $returnCode);
+
+		$this->assertEquals(0, $returnCode);
+		$this->assertRegExp('/Elasticsearch writer finished successfully/ui', $lastOutput);
+		$this->assertEquals(1, $this->parseBatchCountFromOutput($output));
+
+
+		$writer = $this->writer;
+		$writer->getClient()->indices()->refresh(['index' => $this->index]);
+
+		$params = [
+			'index' => $this->index,
+			'type' => 'language-with-list',
+		];
+
+		$items = $writer->getClient()->search($params);
+
+		$this->assertCount(4, $items);
+
+		$item24 = $writer->getClient()->get([
+			'index' => $this->index,
+			'type' => 'language-with-list',
+			'id' => 24
+		]);
+
+		$this->assertEquals([
+			'id' => 24,
+			'name' => 'french',
+			'iso' => 'fr',
+			'something' => '',
+			'list' => [5],
+		], $item24['_source']);
+
+		$item26 = $writer->getClient()->get([
+			'index' => $this->index,
+			'type' => 'language-with-list',
+			'id' => 26
+		]);
+
+		$this->assertEquals([
+			'id' => 26,
+			'name' => 'czech',
+			'iso' => 'cs',
+			'something' => '',
+			'list' => null,
+		], $item26['_source']);
+	}
 }
