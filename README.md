@@ -1,10 +1,8 @@
 # Elasticsearch Writer
 
-[![Build Status](https://travis-ci.org/keboola/elastic-writer.svg?branch=master)](https://travis-ci.org/keboola/elastic-writer)
+[![Build Status](https://app.travis-ci.com/keboola/elastic-writer.svg?branch=master)](https://app.travis-ci.com/keboola/elastic-writer)
 
 Writer expects that mapping of types and indexes in your Elasticsearch exists. If it is missing and you have enabled [automatic index creation](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html#index-creation), new mapping will be created.
-
---
 
 ## Configuration
 
