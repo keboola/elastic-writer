@@ -68,6 +68,80 @@ class RunTest extends AbstractTest
 		$this->assertEquals(1, $this->parseBatchCountFromOutput($output));
 	}
 
+	public function testRunActionWithIndexDrop()
+	{
+		// 1st load
+
+		$config = [
+			"parameters" => [
+				"elastic" => [
+					"host" => getenv('EX_ES_HOST'),
+					"port" => getenv('EX_ES_HOST_PORT'),
+				],
+				"tables" => [
+					[
+						"file" => "language.csv",
+						"index" => $this->index,
+						"type" => "language",
+						"id" => "id",
+						"export" => true,
+					]
+				]
+			]
+		];
+
+		$yaml = Yaml::dump($config);
+
+		$inTablesDir = './tests/data/run/in/tables';
+		if (!is_dir($inTablesDir)) {
+			mkdir($inTablesDir, 0777, true);
+		}
+
+		file_put_contents('./tests/data/run/config.yml', $yaml);
+
+		copy('./tests/data/csv/language.csv', $inTablesDir . '/language.csv');
+
+		$lastOutput = exec('php ./src/run.php --data=./tests/data/run', $output1, $returnCode);
+
+		$this->assertEquals(0, $returnCode);
+		$this->assertNotContains(sprintf('Index "%s" has been deleted', $this->index), join("\n", $output1));
+		$this->assertRegExp('/Elasticsearch writer finished successfully/ui', $lastOutput);
+		$this->assertEquals(1, $this->parseBatchCountFromOutput($output1));
+
+		// 2nd load
+
+		$config = [
+			"parameters" => [
+				"elastic" => [
+					"host" => getenv('EX_ES_HOST'),
+					"port" => getenv('EX_ES_HOST_PORT'),
+				],
+				"tables" => [
+					[
+						"file" => "language.csv",
+						"index" => $this->index,
+						"type" => "language",
+						"id" => "id",
+						"export" => true,
+						"deleteIndexBeforeLoad" => true
+					]
+				]
+			]
+		];
+
+		$yaml = Yaml::dump($config);
+
+		file_put_contents('./tests/data/run/config.yml', $yaml);
+
+		$lastOutput = exec('php ./src/run.php --data=./tests/data/run', $output2, $returnCode);
+
+		$this->assertEquals(0, $returnCode);
+		$this->assertContains(sprintf('Index "%s" has been deleted', $this->index), join("\n", $output2));
+		$this->assertRegExp('/Elasticsearch writer finished successfully/ui', $lastOutput);
+
+		$this->assertEquals(1, $this->parseBatchCountFromOutput($output2));
+	}
+
 	public function testRunWithBulkSizeAction()
 	{
 		$config = [

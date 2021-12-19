@@ -163,6 +163,9 @@ class Application
 
 
 			try {
+				if (isset($table['deleteIndexBeforeLoad']) && $table['deleteIndexBeforeLoad'] === true) {
+					$this->writer->deleteIndexIfExists($options->getIndex());
+				}
 				$this->writer->loadFile($file, $options, $idColumn);
 			} catch (UserException $e) {
 				// Add prefix to message

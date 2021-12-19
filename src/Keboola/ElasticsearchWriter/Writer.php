@@ -84,6 +84,20 @@ class Writer
 		}
 	}
 
+	public function deleteIndexIfExists($indexName)
+	{
+		$indexExists = $this->client->indices()->exists(['index' => $indexName]);
+		if (!$indexExists) {
+			return;
+		}
+
+		$this->client->indices()->delete(['index' => $indexName]);
+		$this->logger->info(sprintf(
+			'Index "%s" has been deleted',
+			$indexName
+		));
+	}
+
 	private function mapRowsToRequestBody(LoadOptions $options, array $csvHeader, $primaryIndex, Iterator $rows): Generator
 	{
 		foreach ($rows as $line => $values) {
