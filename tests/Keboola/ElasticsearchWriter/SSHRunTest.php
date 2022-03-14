@@ -74,6 +74,54 @@ class SSHRunTest extends AbstractTest
 		$this->assertRegExp('/Elasticsearch writer finished successfully/ui', $lastOutput);
 	}
 
+    public function testRunActionWithWrongPort()
+    {
+        $config = [
+            "parameters" => [
+                "elastic" => [
+                    "host" => getenv('EX_ES_HOST'),
+                    "port" => getenv('EX_ES_HOST_PORT'),
+                    "bulkSize" => 10,
+                    "ssh" => [
+                        "enabled" => true,
+                        "user" => "root",
+                        "sshHost" => "sshproxy",
+                        'sshPort' => "1234", //invalid port
+                        "keys" => [
+                            'private' => getenv('EX_ES_SSH_KEY_PRIVATE'),
+                        ]
+                    ]
+                ],
+                "tables" => [
+                    [
+                        "file" => "language-large.csv",
+                        "index" => $this->index,
+                        "type" => "language",
+                        "id" => "id",
+                        "export" => true,
+                    ]
+                ]
+            ]
+        ];
+
+        $yaml = Yaml::dump($config);
+
+        $inTablesDir = './tests/data/run/in/tables';
+        if (!is_dir($inTablesDir)) {
+            mkdir($inTablesDir, 0777, true);
+        }
+
+        file_put_contents('./tests/data/run/config.yml', $yaml);
+
+        copy('./tests/data/csv/language-large.csv', $inTablesDir . '/language-large.csv');
+
+        $lastOutput = exec('php ./src/run.php --data=./tests/data/run', $output, $returnCode);
+
+        $this->assertRegExp('/Unable to create SSH tunnel/ui', $lastOutput);
+        $this->assertEquals(1, $returnCode);
+
+    }
+
 	public function testMappingAction()
 	{
 		// prepare data

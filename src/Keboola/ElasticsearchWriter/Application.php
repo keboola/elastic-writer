@@ -5,11 +5,10 @@
  */
 namespace Keboola\ElasticsearchWriter;
 
-use Elasticsearch;
 use Keboola\Csv\CsvFile;
 use Keboola\ElasticsearchWriter\Exception\UserException;
-use Keboola\ElasticsearchWriter\Mapping\ColumnsMapper;
 use Keboola\SSHTunnel\SSH;
+use Keboola\SSHTunnel\SSHException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -83,7 +82,11 @@ class Application
 
 		$ssh = new SSH();
 
-		$ssh->openTunnel($tunnelParams);
+        try {
+            $ssh->openTunnel($tunnelParams);
+        } catch (SSHException $e) {
+            throw new UserException($e->getMessage());
+        }
 
 		$parameters['elastic']['host'] = '127.0.0.1';
 		$parameters['elastic']['port'] = $sshConfig['localPort'];
