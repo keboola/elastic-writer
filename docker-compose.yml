@@ -43,7 +43,7 @@ services:
       - "9200:9200"
 
   elasticsearch71:
-    image: elasticsearch:7.14.0
+    image: elasticsearch:7.1.1
     environment:
       - discovery.type=single-node
 
