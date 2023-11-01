@@ -20,7 +20,7 @@ services:
 
   app-tests:
     image: keboola/elastic-writer
-    entrypoint: sh
+    command: composer ci
     links:
       - elasticsearch13
       - elasticsearch22
@@ -39,8 +39,6 @@ services:
   elasticsearch22:
     image: elasticsearch:2.2
     command: elasticsearch -Des.cluster.name="SAPI-Testing-22"
-    ports:
-      - "9200:9200"
 
   elasticsearch71:
     image: elasticsearch:7.1.1

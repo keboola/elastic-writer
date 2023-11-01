@@ -74,13 +74,13 @@ jobs:
           tag_as_latest: true
       -
         name: 'Run tests with elasticsearch version 1.3'
-        run: 'docker-compose run --rm -e EX_ES_HOST=elasticsearch13 -e EX_ES_HOST_PORT=9200 app-tests composer ci'
+        run: 'docker-compose run --rm -e EX_ES_HOST=elasticsearch13 -e EX_ES_HOST_PORT=9200 app-tests'
       -
         name: 'Run tests with elasticsearch version 2.2'
-        run: 'docker-compose run --rm -e EX_ES_HOST=elasticsearch22 -e EX_ES_HOST_PORT=9200 app-tests composer ci'
+        run: 'docker-compose run --rm -e EX_ES_HOST=elasticsearch22 -e EX_ES_HOST_PORT=9200 app-tests'
       -
         name: 'Run tests with elasticsearch version 7.1.1'
-        run: 'docker-compose run --rm -e EX_ES_HOST=elasticsearch71 -e EX_ES_HOST_PORT=9200 app-tests composer ci'
+        run: 'docker-compose run --rm -e EX_ES_HOST=elasticsearch71 -e EX_ES_HOST_PORT=9200 app-tests'
 
   deploy:
     needs:
