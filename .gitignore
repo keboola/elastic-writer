@@ -5,3 +5,4 @@ composer.phar
 tests/data/run/
 /.env
 /ssh.*
+.phpunit.result.cache

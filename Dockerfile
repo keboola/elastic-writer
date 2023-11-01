@@ -1,20 +1,42 @@
-FROM php:7.0
-MAINTAINER Erik Zigo <erik.zigo@keboola.com>
+FROM php:8.2-cli-buster
 
-RUN apt-get update -q \
-  && apt-get install ssh unzip git libxml2-dev -y --no-install-recommends
+ARG COMPOSER_FLAGS="--prefer-dist --no-interaction"
+ARG DEBIAN_FRONTEND=noninteractive
+ENV COMPOSER_ALLOW_SUPERUSER 1
+ENV COMPOSER_PROCESS_TIMEOUT 3600
 
-WORKDIR /root
+WORKDIR /code/
 
-RUN curl -sS https://getcomposer.org/installer | php \
-  && mv composer.phar /usr/local/bin/composer
+COPY docker/php-prod.ini /usr/local/etc/php/php.ini
+COPY docker/composer-install.sh /tmp/composer-install.sh
 
-COPY docker/php.ini /usr/local/etc/php/php.ini
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ssh \
+        unzip \
+        git \
+        locales \
+        libxml2-dev \
+	&& rm -r /var/lib/apt/lists/* \
+	&& sed -i 's/^# *\(en_US.UTF-8\)/\1/' /etc/locale.gen \
+	&& locale-gen \
+	&& chmod +x /tmp/composer-install.sh \
+	&& /tmp/composer-install.sh
 
-COPY . /code
+ENV LANGUAGE=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
-WORKDIR /code
+## Composer - deps always cached unless changed
+# First copy only composer files
+COPY composer.* /code/
 
-RUN composer install --prefer-dist --no-interaction
+# Download dependencies, but don't run scripts or init autoloaders as the app is missing
+RUN composer install $COMPOSER_FLAGS --no-scripts --no-autoloader
 
-ENTRYPOINT php ./src/run.php --data=/data
+# Copy rest of the app
+COPY . /code/
+
+# Run normal composer - all deps are cached already
+RUN composer install $COMPOSER_FLAGS
+
+CMD ["php", "/code/src/run.php"]

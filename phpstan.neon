@@ -1,0 +1,6 @@
+parameters:
+    checkMissingIterableValueType: false
+    ignoreErrors:
+            - '#Call to an undefined method Symfony\\Component\\Config\\Definition\\Builder\\NodeDefinition::ignoreExtraKeys\(\)\.#'
+            - '#Call to an undefined method Symfony\\Component\\Config\\Definition\\Builder\\NodeDefinition::children\(\)\.#'
+            - '#Cannot call method scalarNode\(\) on Symfony\\Component\\Config\\Definition\\Builder\\NodeParentInterface\|null\.#'

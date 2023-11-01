@@ -1,0 +1,17 @@
+{
+  "parameters": {
+    "elastic": {
+      "host": "elasticsearch13",
+      "port": 9200,
+      "bulkSize": 10
+    },
+    "tables": [
+      {
+        "index": "eshop",
+        "type": "language",
+        "id": "id",
+        "export": true
+      }
+    ]
+  }
+}
