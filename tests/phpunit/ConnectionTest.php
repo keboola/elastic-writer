@@ -9,18 +9,18 @@ use Elasticsearch\ClientBuilder;
 
 class ConnectionTest extends AbstractTestClass
 {
-	protected Client $client;
+    protected Client $client;
 
-	protected function setUp(): void
+    protected function setUp(): void
     {
-		parent::setUp();
-		$builder = ClientBuilder::create();
-		$builder->setHosts(array(sprintf('%s:%s', getenv('EX_ES_HOST'), getenv('EX_ES_HOST_PORT'))));
-		$this->client = $builder->build();
-	}
+        parent::setUp();
+        $builder = ClientBuilder::create();
+        $builder->setHosts([sprintf('%s:%s', getenv('EX_ES_HOST'), getenv('EX_ES_HOST_PORT'))]);
+        $this->client = $builder->build();
+    }
 
-	public function testConnection(): void
-	{
-		$this->assertTrue($this->client->ping());
-	}
+    public function testConnection(): void
+    {
+        $this->assertTrue($this->client->ping());
+    }
 }
