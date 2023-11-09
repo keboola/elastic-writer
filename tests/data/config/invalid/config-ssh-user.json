@@ -1,0 +1,25 @@
+{
+  "parameters": {
+    "elastic": {
+      "host": "elasticsearch13",
+      "port": 9200,
+      "bulkSize": 10,
+      "ssh": {
+        "enabled": true,
+        "sshHost": "localhost",
+        "keys": {
+          "private": "somenecryptedkey"
+        }
+      }
+    },
+    "tables": [
+      {
+        "file": "language.csv",
+        "index": "eshop",
+        "type": "language",
+        "id": "id",
+        "export": true
+      }
+    ]
+  }
+}

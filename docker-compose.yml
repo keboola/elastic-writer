@@ -5,26 +5,22 @@ services:
   app:
     build: .
     image: keboola/elastic-writer
-    tty: true
-    stdin_open: true
     volumes:
+      - ssh-keys:/root/.ssh:ro,z
       - ./:/code
+      - ./data:/data
     links:
       - elasticsearch13
       - elasticsearch22
       - elasticsearch71
       - sshproxy
-    entrypoint: bash
     environment:
       - EX_ES_HOST
       - EX_ES_HOST_PORT
 
   app-tests:
     image: keboola/elastic-writer
-    entrypoint: sh
-    command: -c 'sleep 10 && ./phpunit.sh'
-    tty: true
-    stdin_open: true
+    command: composer ci
     links:
       - elasticsearch13
       - elasticsearch22
@@ -33,6 +29,8 @@ services:
     environment:
       - EX_ES_HOST
       - EX_ES_HOST_PORT
+    volumes:
+      - ssh-keys:/root/.ssh:ro,z
 
   elasticsearch13:
     image: elasticsearch:1.3
@@ -48,13 +46,13 @@ services:
       - discovery.type=single-node
 
   sshproxy:
-    build: ./tests/env/sshproxy
+    image: keboola/db-component-ssh-proxy:latest
     volumes:
-        - ./tests/env/sshproxy:/code
-    working_dir: /code
-    ports:
-      - "2222:22"
+      - ssh-keys:/root/.ssh:z
     links:
       - elasticsearch13
       - elasticsearch22
       - elasticsearch71
+
+volumes:
+  ssh-keys:

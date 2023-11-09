@@ -8,6 +8,8 @@ Writer expects that mapping of types and indexes in your Elasticsearch exists. I
 - The `elastic` section defines connection info and import config
     - `host` - server address
     - `port` - elasticsearch listening port
+    - `username` - elasticsearch username
+    - `#password` - elasticsearch password
     - `bulkSize` *(optional)* - size of a batch to upload to Elasticsearch *(default is 10.000)*
     - `ssh` - SSH tunnel configuration
         - `enabled` - enable SSH tunnel for connection to Elasticsearch
