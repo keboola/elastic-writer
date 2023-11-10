@@ -30,7 +30,6 @@ abstract class AbstractTestClass extends TestCase
         );
         $this->dataDir = new Temp();
         mkdir($this->dataDir->getTmpFolder() . '/in/tables', 0777, true);
-        mkdir($this->dataDir->getTmpFolder() . '/in/files', 0777, true);
         $this->cleanUp();
     }
 

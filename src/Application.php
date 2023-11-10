@@ -57,13 +57,12 @@ class Application extends BaseComponent
         );
 
         $sourceType = !empty($parameters['tableId']) ? 'table' : 'file';
+        $path = $this->getDataDir() . '/in/tables';
 
         if ($sourceType === 'table') {
             $logPrefix = sprintf('Table %s - ', $parameters['tableId']);
-            $path = $this->getDataDir() . '/in/tables';
         } else {
             $logPrefix = sprintf('File %s - ', $parameters['file']);
-            $path = $this->getDataDir() . '/in/files';
         }
 
         if (empty($parameters['export'])) {
