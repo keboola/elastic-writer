@@ -105,7 +105,7 @@ class TypesMappingTest extends AbstractTestClass
 
         file_put_contents($this->dataDir->getTmpFolder() . '/config.json', json_encode($config));
 
-        copy(__DIR__ . '/../data/csv/types.csv', $this->dataDir->getTmpFolder() . '/in/files/types.csv');
+        copy(__DIR__ . '/../data/csv/types.csv', $this->dataDir->getTmpFolder() . '/in/tables/types.csv');
 
         $process = $this->runProcess();
 

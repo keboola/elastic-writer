@@ -54,7 +54,7 @@ class SSHRunTest extends AbstractTestClass
 
         copy(
             __DIR__ . '/../data/csv/language-large.csv',
-            $this->dataDir->getTmpFolder() . '/in/files/language-large.csv',
+            $this->dataDir->getTmpFolder() . '/in/tables/language-large.csv',
         );
 
         $process = $this->runProcess();
@@ -102,7 +102,7 @@ class SSHRunTest extends AbstractTestClass
 
         copy(
             __DIR__ . '/../data/csv/language-large.csv',
-            $this->dataDir->getTmpFolder() . '/in/files/language-large.csv',
+            $this->dataDir->getTmpFolder() . '/in/tables/language-large.csv',
         );
 
         $process = $this->runProcess();
@@ -149,7 +149,7 @@ class SSHRunTest extends AbstractTestClass
 
         copy(
             __DIR__ . '/../data/csv/language-large.csv',
-            $this->dataDir->getTmpFolder() . '/in/files/language-large.csv',
+            $this->dataDir->getTmpFolder() . '/in/tables/language-large.csv',
         );
 
         $process = $this->runProcess();
@@ -186,7 +186,7 @@ class SSHRunTest extends AbstractTestClass
 
         copy(
             __DIR__ . '/../data/csv/language-large.csv',
-            $this->dataDir->getTmpFolder() . '/in/files/language-large.csv',
+            $this->dataDir->getTmpFolder() . '/in/tables/language-large.csv',
         );
 
         $process = $this->runProcess();

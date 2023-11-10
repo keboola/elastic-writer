@@ -35,7 +35,7 @@ class RunTest extends AbstractTestClass
 
         copy(
             __DIR__ . '/../data/csv/language-large.csv',
-            $this->dataDir->getTmpFolder() . '/in/files/language-large.csv',
+            $this->dataDir->getTmpFolder() . '/in/tables/language-large.csv',
         );
 
         $process = $this->runProcess();
@@ -71,7 +71,7 @@ class RunTest extends AbstractTestClass
 
         copy(
             __DIR__ . '/../data/csv/language-large.csv',
-            $this->dataDir->getTmpFolder() . '/in/files/language-large.csv',
+            $this->dataDir->getTmpFolder() . '/in/tables/language-large.csv',
         );
 
         $process = $this->runProcess();
@@ -109,7 +109,7 @@ class RunTest extends AbstractTestClass
 
         copy(
             __DIR__ . '/../data/csv/language-large.csv',
-            $this->dataDir->getTmpFolder() . '/in/files/language-large.csv',
+            $this->dataDir->getTmpFolder() . '/in/tables/language-large.csv',
         );
 
         $process = $this->runProcess();
@@ -133,7 +133,7 @@ class RunTest extends AbstractTestClass
 
         copy(
             __DIR__ . '/../data/csv/language-large.csv',
-            $this->dataDir->getTmpFolder() . '/in/files/language-large.csv',
+            $this->dataDir->getTmpFolder() . '/in/tables/language-large.csv',
         );
 
         $process = $this->runProcess();
@@ -217,7 +217,7 @@ class RunTest extends AbstractTestClass
 
         copy(
             __DIR__ . '/../data/csv/language-with-list.csv',
-            $this->dataDir->getTmpFolder() . '/in/files/language-with-list.csv',
+            $this->dataDir->getTmpFolder() . '/in/tables/language-with-list.csv',
         );
 
         $process = $this->runProcess();
