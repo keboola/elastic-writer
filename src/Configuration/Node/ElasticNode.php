@@ -18,6 +18,7 @@ class ElasticNode extends ArrayNodeDefinition
     {
         parent::__construct(self::NODE_NAME, $parent);
         $this->isRequired();
+        $this->ignoreExtraKeys();
         $this->validate();
         $this->init($this->children());
     }

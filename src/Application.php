@@ -38,31 +38,42 @@ class Application extends BaseComponent
             foreach ($tables as $table) {
                 $this->rawConfig = ['parameters' => $parameters + $table];
                 $this->loadConfig();
-                $this->runRow($writer);
+                $this->runRow($writer, true);
             }
         } else {
             $this->loadConfig();
-            $this->runRow($writer);
+            $this->runRow($writer, false);
         }
     }
 
-    private function runRow(Writer $writer): void
+    private function runRow(Writer $writer, bool $oldConfig): void
     {
         $parameters = $this->getConfig()->getParameters();
-
-        $host = sprintf(
-            '%s:%s',
-            $parameters['elastic']['host'],
-            $parameters['elastic']['port'],
-        );
-
-        $sourceType = !empty($parameters['tableId']) ? 'table' : 'file';
         $path = $this->getDataDir() . '/in/tables';
 
-        if ($sourceType === 'table') {
-            $logPrefix = sprintf('Table %s - ', $parameters['tableId']);
+        $logPrefix = '';
+        if ($oldConfig) {
+            $sourceType = !empty($parameters['tableId']) ? 'table' : 'file';
+            if ($sourceType === 'table') {
+                $logPrefix = sprintf('Table %s - ', $parameters['tableId']);
+            } else {
+                $logPrefix = sprintf('File %s - ', $parameters['file']);
+            }
+
+            // source file
+            if (!empty($parameters['tableId'])) {
+                $file = new CsvReader(sprintf('%s/%s.csv', $path, $parameters['tableId']));
+            } else {
+                $file = new CsvReader(sprintf('%s/%s', $path, $parameters['file']));
+                if (!str_ends_with(mb_strtolower($parameters['file']), 'csv')) {
+                    throw new UserException($logPrefix . 'Export failed. Only csv files are supported');
+                }
+            }
+        } elseif (count($this->getConfig()->getInputTables()) > 1) {
+            throw new UserException('Only one table is supported in configuration row format');
         } else {
-            $logPrefix = sprintf('File %s - ', $parameters['file']);
+            $table = $this->getConfig()->getInputTables()[0];
+            $file = new CsvReader(sprintf('%s/%s', $path, $table['destination']));
         }
 
         if (empty($parameters['export'])) {
@@ -84,16 +95,6 @@ class Application extends BaseComponent
         }
 
         $idColumn = !empty($parameters['id']) ? $parameters['id'] : null;
-
-        // source file
-        if (!empty($parameters['tableId'])) {
-            $file = new CsvReader(sprintf('%s/%s.csv', $path, $parameters['tableId']));
-        } else {
-            $file = new CsvReader(sprintf('%s/%s', $path, $parameters['file']));
-            if (!str_ends_with(mb_strtolower($parameters['file']), 'csv')) {
-                throw new UserException($logPrefix . 'Export failed. Only csv files are supported');
-            }
-        }
 
         try {
             $writer->loadFile($file, $options, $idColumn);
