@@ -115,7 +115,7 @@ class Application extends BaseComponent
 
         if ($action !== 'run') {
             return ConfigActionDefinition::class;
-        } elseif ($this->baseConfigDefinition) {
+        } elseif ($this->baseConfigDefinition && !empty($rawConfig['parameters']['tables'])) {
             return ConfigDefinition::class;
         } else {
             return ConfigRowDefinition::class;
