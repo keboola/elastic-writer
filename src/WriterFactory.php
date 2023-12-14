@@ -30,7 +30,12 @@ class WriterFactory
             $parameters['elastic']['port'],
         );
 
-        return new Writer($host, $this->logger);
+        return new Writer(
+            $host,
+            $this->logger,
+            $parameters['elastic']['username'] ?? null,
+            $parameters['elastic']['#password'] ?? null,
+        );
     }
 
     private function createSshTunnel(array $parameters): array
